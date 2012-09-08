@@ -9,12 +9,11 @@ AbbreviateNames = 20,
 -- Scale of all frames (1.0 = 100%)
 FrameScale = 1.0,
 -- Focus frame scale (size of focus frame = FrameScale * FocusFrameScale)
-FocusFrameScale = 0.8,
+FocusFrameScale = 0.6,
 -- Margin for player / target frames (x, y from the center of the screen)
--- FrameMargin = {200, 300},
-FrameMargin = {150, 160},
--- Margin for focus frame (x, y from the center of the screen)
-FocusFrameMargin = {0, 300},
+FrameMargin = {200, 300},
+-- Vertical margin for focus frame (from the center of the screen)
+FocusFrameMarginY = 300,
 -- Margin for boss frames (x, y from the right edge)
 BossFrameMargin = {-10, -480},
 -- Boss frame scale (size of boss frame = FrameScale * BossFrameScale)
@@ -168,9 +167,9 @@ AuraStickyColor = {1, 0.65, 0.16},
 -- Aura settings for target
 AurasTARGET = {
 	-- Maximum number of buffs shown
-	MaxBuffs = 9,
+	MaxBuffs = 32,
 	-- Maximum number of debuffs shown
-	MaxDebuffs = 9,
+	MaxDebuffs = 40,
 
 	-- Set to true, these kinds of auras will *ALWAYS* be shown and are colored.
 	-- Overrides white- and blacklists (see below)!
@@ -180,9 +179,9 @@ AurasTARGET = {
 		-- Debuffs afflicted by player on hostile units (true/false)
 		myDebuffs = true,
 		-- Debuffs afflicted by player's pet on hostile units (true/false)
-		petDebuffs = false,
+		petDebuffs = true,
 		-- Debuffs on friendly units that you can cure (true/false)
-		curableDebuffs = false,
+		curableDebuffs = true,
 		-- Buffs a hostile unit casted on itself (true/false)
 		enemySelfBuffs = true,
 	},
@@ -214,8 +213,8 @@ AurasTARGET = {
 -- Aura settings for focus
 -- Please refer to the explanations above
 AurasFOCUS = {
-	MaxBuffs = 4,
-	MaxDebuffs = 4,
+	MaxBuffs = 32,
+	MaxDebuffs = 40,
 
 	StickyAuras = {
 		myBuffs = true,
