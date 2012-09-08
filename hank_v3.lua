@@ -973,14 +973,34 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 		-- 	self.Runes[runemap[i]].rid = i
 		-- end
 	end
+
+	-- local ClassIcons = {}
+	-- local bg = {}
+	-- for index = 1, 5 do
+	-- 	local Icon = self:CreateTexture(nil, 'BACKGROUND')
+	-- 	bg[index] = Icon
+
+	-- 	-- Position and size.
+	-- 	Icon:SetSize(16, 16)
+	-- 	-- Icon:SetPoint('TOPLEFT', self, 'BOTTOMLEFT', index * Icon:GetWidth(), 0)
+	-- 	if index > 1 then Icon:SetPoint("RIGHT", bg[index - 1], "LEFT", -5, 0)
+	-- 	else Icon:SetPoint("TOPRIGHT", self, "BOTTOMRIGHT") end
+	-- 	Icon:SetTexture("Interface\\AddOns\\oUF_Hank_v3\\textures\\ClassIcons.blp")
+	-- 	Icon:SetTexCoord(18 / 64, 36 / 64, 0, 18 / 32)
+
+	-- 	ClassIcons[index] = Icon
+	-- end
+   
+ --   -- Register with oUF
+ --   self.ClassIcons = ClassIcons
 	
 	-- Holy power
 	if unit == "player" and select(2, UnitClass("player")) == "PALADIN" then
 		local bg = {}
 		local HPowerAnim = {}
-		self.HolyPower = {}
+		self.ClassIcons = {}
 		-- Helper var for animation handling
-		self.HolyPower.lastHPow = UnitPower("player", SPELL_POWER_HOLY_POWER)
+		self.ClassIcons.lastHPow = UnitPower("player", SPELL_POWER_HOLY_POWER)
 		
 		for i = 1, 5 do
 			bg[i] = CreateFrame("Frame", nil, self)
@@ -989,65 +1009,65 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 			if i > 1 then bg[i]:SetPoint("RIGHT", bg[i - 1], "LEFT", -5, 0) end
 			
 			bg[i].tex = bg[i]:CreateTexture(nil, "ARTWORK")
-			bg[i].tex:SetTexture("Interface\\AddOns\\oUF_Hank_v3\\textures\\holypower.blp")
+			bg[i].tex:SetTexture("Interface\\AddOns\\oUF_Hank_v3\\textures\\HolyPower.blp")
 			bg[i].tex:SetTexCoord(0, 18 / 64, 0, 18 / 32)
 			bg[i].tex:SetAllPoints(bg[i])
-			self.HolyPower[i] = bg[i]:CreateTexture(nil, "OVERLAY")
-			self.HolyPower[i]:SetTexture("Interface\\AddOns\\oUF_Hank_v3\\textures\\holypower.blp")
-			self.HolyPower[i]:SetTexCoord(18 / 64, 36 / 64, 0, 18 / 32)
-			self.HolyPower[i]:SetAllPoints(bg[i])
-			self.HolyPower[i]:SetVertexColor(unpack(cfg.colors.power.HOLY_POWER))
+			self.ClassIcons[i] = bg[i]:CreateTexture(nil, "OVERLAY")
+			self.ClassIcons[i]:SetTexture("Interface\\AddOns\\oUF_Hank_v3\\textures\\HolyPower.blp")
+			self.ClassIcons[i]:SetTexCoord(18 / 64, 36 / 64, 0, 18 / 32)
+			self.ClassIcons[i]:SetAllPoints(bg[i])
+			self.ClassIcons[i]:SetVertexColor(unpack(cfg.colors.power.HOLY_POWER))
 
 			-- need access to the background in the PostUpdate function
-			self.HolyPower[i].bg = bg[i].tex
+			self.ClassIcons[i].bg = bg[i].tex
 			
-			HPowerAnim[i] = self.HolyPower[i]:CreateAnimationGroup()
+			HPowerAnim[i] = self.ClassIcons[i]:CreateAnimationGroup()
 			local alphaIn = HPowerAnim[i]:CreateAnimation("Alpha")
 			alphaIn:SetChange(1)
 			alphaIn:SetSmoothing("OUT")
 			alphaIn:SetDuration(1)
 			alphaIn:SetOrder(1)
 			
-			HPowerAnim[i]:SetScript("OnFinished", function() self.HolyPower[i]:SetAlpha(1) end)
+			HPowerAnim[i]:SetScript("OnFinished", function() self.ClassIcons[i]:SetAlpha(1) end)
 		end
 		
 		bg[1]:SetPoint("TOPRIGHT", self, "BOTTOMRIGHT")
 		
-		self.HolyPower.PostUpdate = function(_, hPow)
-			local hMax = UnitPowerMax("player", SPELL_POWER_HOLY_POWER)
-			if hMax == 3 then
-				self.HolyPower[4]:Hide()
-				self.HolyPower[4].bg:Hide()
-				self.HolyPower[5]:Hide()
-				self.HolyPower[5].bg:Hide()
+		self.ClassIcons.PostUpdate = function(_, currentPower, maxPower, changed)
+			-- update how many holy power icons are shown
+			if maxPower == 3 then
+				self.ClassIcons[4]:Hide()
+				self.ClassIcons[4].bg:Hide()
+				self.ClassIcons[5]:Hide()
+				self.ClassIcons[5].bg:Hide()
 			else
-				self.HolyPower[4].bg:Show()
-				self.HolyPower[5].bg:Show()
+				self.ClassIcons[4].bg:Show()
+				self.ClassIcons[5].bg:Show()
 			end
 
 			-- if lastHPow is nil, set it to 0
-			self.HolyPower.lastHPow = self.HolyPower.lastHPow and self.HolyPower.lastHPow or 0
-			if hPow > 0 then
-				if self.HolyPower.lastHPow < hPow then
-					-- Play animation only on chi gains
-					self.HolyPower[hPow]:SetAlpha(0)
-					HPowerAnim[hPow]:Play();
+			self.ClassIcons.lastHPow = self.ClassIcons.lastHPow and self.ClassIcons.lastHPow or 0
+			if currentPower > 0 then
+				if self.ClassIcons.lastHPow < currentPower then
+					-- Play animation only when we gain power
+					self.ClassIcons[currentPower]:SetAlpha(0)
+					HPowerAnim[currentPower]:Play();
 				end
 			else
-				for i = 1, hMax do
-					-- Spent/lost Chi, stop all running animations
-					self.HolyPower.lastHPow = hPow
+				for i = 1, maxPower do
+					-- no holy power, stop all running animations
+					self.ClassIcons.lastHPow = currentPower
 					if HPowerAnim[i]:IsPlaying() then HPowerAnim[i]:Stop() end
 				end
 			end
-			self.HolyPower.lastHPow = hPow
+			self.ClassIcons.lastHPow = currentPower
 		end
 	end
 
 	-- Harmony Orbs
 	if unit == "player" and select(2, UnitClass("player")) == "MONK" then
 		local bg = {}
-		self.Harmony = {}
+		self.ClassIcons = {}
 
 		for i = 1, 5 do
 			bg[i] = CreateFrame("Frame", nil, self)
@@ -1059,24 +1079,23 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 			bg[i].tex:SetTexture[[Interface\PlayerFrame\MonkNoPower]]
 			bg[i].tex:SetTexCoord(0, 1, 0, 1)
 			bg[i].tex:SetAllPoints(bg[i])
-			self.Harmony[i] = bg[i]:CreateTexture(nil, "OVERLAY")
-			self.Harmony[i]:SetTexture[[Interface\PlayerFrame\MonkLightPower]]
-			self.Harmony[i]:SetTexCoord(0, 1, 0, 1)
-			self.Harmony[i]:SetAllPoints(bg[i])
+			self.ClassIcons[i] = bg[i]:CreateTexture(nil, "OVERLAY")
+			self.ClassIcons[i]:SetTexture[[Interface\PlayerFrame\MonkLightPower]]
+			self.ClassIcons[i]:SetTexCoord(0, 1, 0, 1)
+			self.ClassIcons[i]:SetAllPoints(bg[i])
 
 			-- need access to the background in the PostUpdate function
-			self.Harmony[i].bg = bg[i].tex
+			self.ClassIcons[i].bg = bg[i].tex
 		end
 		
 		bg[1]:SetPoint("TOPRIGHT", self, "BOTTOMRIGHT", -78, 0)
 
-		self.Harmony.PostUpdate = function(_, chi)
-			local hMax = UnitPowerMax("player", SPELL_POWER_LIGHT_FORCE)
-			if hMax == 4 then
-				self.Harmony[5]:Hide()
-				self.Harmony[5].bg:Hide()
+		self.ClassIcons.PostUpdate = function(_, currentChi, maxChi)
+			if maxChi == 4 then
+				self.ClassIcons[5]:Hide()
+				self.ClassIcons[5].bg:Hide()
 			else
-				self.Harmony[5].bg:Show()
+				self.ClassIcons[5].bg:Show()
 			end
 		end
 	end
@@ -1084,7 +1103,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 	-- Shadow Orbs
 	if unit == "player" and select(2, UnitClass("player")) == "PRIEST" then
 		local bg = {}
-		self.ShadowOrbs = {}
+		self.ClassIcons = {}
 
 		for i = 1, 3 do
 			bg[i] = CreateFrame("Frame", nil, self)
@@ -1096,11 +1115,16 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 			bg[i].tex:SetTexture[[Interface\PlayerFrame\Priest-ShadowUI]]
 			bg[i].tex:SetTexCoord(76/256, 112/256, 57/128, 94/128)
 			bg[i].tex:SetAllPoints(bg[i])
-			self.ShadowOrbs[i] = bg[i]:CreateTexture(nil, "OVERLAY")
-			self.ShadowOrbs[i]:SetTexture[[Interface\PlayerFrame\Priest-ShadowUI]]
-			self.ShadowOrbs[i]:SetTexCoord(116/256, 152/256, 57/128, 94/128)
-			self.ShadowOrbs[i]:SetAllPoints(bg[i])
+			self.ClassIcons[i] = bg[i]:CreateTexture(nil, "OVERLAY")
+			self.ClassIcons[i]:SetTexture[[Interface\PlayerFrame\Priest-ShadowUI]]
+			self.ClassIcons[i]:SetTexCoord(116/256, 152/256, 57/128, 94/128)
+			self.ClassIcons[i]:SetAllPoints(bg[i])
 		end
+
+		-- only 3 shadow orbs, but we need to create throwaway textures for oUF classicons
+		local throwAway = CreateFrame("Frame")
+		self.ClassIcons[4] = throwAway:CreateTexture()
+		self.ClassIcons[5] = throwAway:CreateTexture()
 		
 		bg[1]:SetPoint("TOPRIGHT", self, "BOTTOMRIGHT", -72, 0)
 	end
@@ -1109,9 +1133,9 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 	if unit == "player" and select(2, UnitClass("player")) == "WARLOCK" then
 		local bg = {}
 		local shinywheee = {}
-		self.SoulShards = {}
+		self.ClassIcons = {}
 		-- Helper var for animation handling
-		self.SoulShards.lastShards = UnitPower(unit, SPELL_POWER_SOUL_SHARDS)
+		self.ClassIcons.lastShards = UnitPower(unit, SPELL_POWER_SOUL_SHARDS)
 		
 		for i = 1, 4 do
 			bg[i] = CreateFrame("Frame", nil, self)
@@ -1120,17 +1144,17 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 			if i > 1 then bg[i]:SetPoint("RIGHT", bg[i - 1], "LEFT", -5, 0) end
 			
 			bg[i].tex = bg[i]:CreateTexture(nil, "ARTWORK")
-			bg[i].tex:SetTexture("Interface\\AddOns\\oUF_Hank_v3\\textures\\soulshards.blp")
+			bg[i].tex:SetTexture("Interface\\AddOns\\oUF_Hank_v3\\textures\\SoulShards.blp")
 			bg[i].tex:SetTexCoord(0, 17 / 64, 0, 18 / 32)
 			bg[i].tex:SetAllPoints(bg[i])
-			self.SoulShards[i] = bg[i]:CreateTexture(nil, "OVERLAY")
-			self.SoulShards[i]:SetTexture("Interface\\AddOns\\oUF_Hank_v3\\textures\\soulshards.blp")
-			self.SoulShards[i]:SetTexCoord(17 / 64, 34 / 64, 0, 18 / 32)
-			self.SoulShards[i]:SetAllPoints(bg[i])
-			self.SoulShards[i]:SetVertexColor(unpack(cfg.colors.power.SOUL_SHARDS))
+			self.ClassIcons[i] = bg[i]:CreateTexture(nil, "OVERLAY")
+			self.ClassIcons[i]:SetTexture("Interface\\AddOns\\oUF_Hank_v3\\textures\\SoulShards.blp")
+			self.ClassIcons[i]:SetTexCoord(17 / 64, 34 / 64, 0, 18 / 32)
+			self.ClassIcons[i]:SetAllPoints(bg[i])
+			self.ClassIcons[i]:SetVertexColor(unpack(cfg.colors.power.SOUL_SHARDS))
 
 			-- need access to the background in the PostUpdate function
-			self.SoulShards[i].bg = bg[i].tex
+			self.ClassIcons[i].bg = bg[i].tex
 			
 			-- Shine effect
 			shinywheee[i] = CreateFrame("Frame", nil, bg[i])
@@ -1175,27 +1199,30 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 			shinywheee[i].anim:SetScript("OnFinished", function() shinywheee[i]:Hide() end)
 			shinywheee[i]:SetScript("OnShow", function() shinywheee[i].anim:Play() end)
 		end
+
+		-- max 4 soul shards, but we need to create throwaway textures for oUF classicons
+		local throwAway = CreateFrame("Frame")
+		self.ClassIcons[5] = throwAway:CreateTexture()
 		
-		self.SoulShards.PostUpdate = function(_, shards)
-			local shardMax = UnitPowerMax("player", SPELL_POWER_SOUL_SHARDS)
-			if shardMax == 3 then
-				self.SoulShards[4]:Hide()
-				self.SoulShards[4].bg:Hide()
+		self.ClassIcons.PostUpdate = function(_, currentShards, maxShards)
+			if maxShards == 3 then
+				self.ClassIcons[4]:Hide()
+				self.ClassIcons[4].bg:Hide()
 			else
-				self.SoulShards[4].bg:Show()
+				self.ClassIcons[4].bg:Show()
 			end
 
-			self.SoulShards.lastShards = self.SoulShards.lastShards and self.SoulShards.lastShards or 0
-			if shards > 0 then
-				if self.SoulShards.lastShards <= shards then
-					-- Play animation only on shards gains
-					for i = self.SoulShards.lastShards + 1, shards do
+			self.ClassIcons.lastShards = self.ClassIcons.lastShards and self.ClassIcons.lastShards or 0
+			if currentShards > 0 then
+				if self.ClassIcons.lastShards <= currentShards then
+					-- Play animation only on shard gains
+					for i = self.ClassIcons.lastShards + 1, currentShards do
 						-- For each shard gained
 						shinywheee[i]:Show()
 					end
 				end
 			end
-			self.SoulShards.lastShards = shards
+			self.ClassIcons.lastShards = currentShards
 		end
 		
 		bg[1]:SetPoint("TOPRIGHT", self, "BOTTOMRIGHT")
