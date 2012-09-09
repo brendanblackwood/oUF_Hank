@@ -910,58 +910,16 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 				
 			anim:SetScript("OnFinished", function() shinywheee:Hide() end)
 			shinywheee:SetScript("OnShow", function() anim:Play() end)
-				
-			-- -- Fill the dots
-			-- local onUpdate = function(self, val, max)
-			-- 	local runemap = { 1, 2, 5, 6, 3, 4 }
-			-- 	if max and val == 0 then
-			-- 		return
-			-- 	end
-			-- 	if max then
-			-- 		val = 0
-			-- 	end
 
-			-- 	-- Resize round overlay texture when hidden statusbar changes
-			-- 	-- print("foo", self.rid)
-			-- 	local start, duration, runeReady = GetRuneCooldown(self.rid)
-			-- 	print(self.rid, start, duration, runeReady)
-			-- 	if runeReady then
-			-- 		self.last = 0
-			-- 		-- Rune ready: show all 16x16px, play animation
-			-- 		self.bg:SetSize(16, 16)
-			-- 		self.bg:SetTexCoord(0.5, 0.75, 0, 1)
-			-- 		shinywheee:Show()
-			-- 	else
-			-- 		local foo = (GetTime() - start) / duration
-			-- 		if val - self.last >= 1 then
-			-- 			print(self.rid, unpack(oUF.colors.runes[GetRuneType(self.rid)]))
-			-- 			self.last = val
-			-- 		end
-			-- 		print('foo', foo)
-			-- 		-- Dot distance from top & bottom of texture: 4px
-			-- 		self.bg:SetSize(16, 4 + 8 * foo)
-			-- 		-- Show at least the empty 4 bottom pixels + val% of the 8 pixels of the actual dot = 12px max
-			-- 		self.bg:SetTexCoord(0.25, 0.5, 12 / 16 - 8 * foo / 16, 1)
-			-- 	end
-			-- end
-			-- self.Runes[i]:SetScript("OnValueChanged", onUpdate)
-			-- self.Runes[i]:SetScript("OnMinMaxChanged", onUpdate)
 			self.Runes[i]:SetScript("OnValueChanged", function(self, val)
-				-- Resize round overlay texture when hidden statusbar changes
-				-- print("foo", self.rid)
-				local start, duration, runeReady = GetRuneCooldown(i)
+				local start, duration, runeReady = GetRuneCooldown(runemap[i])
 				if runeReady then
 					self.last = 0
 					-- Rune ready: show all 16x16px, play animation
 					self.bg:SetSize(16, 16)
 					self.bg:SetTexCoord(0.5, 0.75, 0, 1)
-					-- shinywheee:Show()
+					shinywheee:Show()
 				else
-					
-					if val - self.last >= 1 then
-						print(self.rid, val, duration)
-						self.last = val
-					end
 					-- Dot distance from top & bottom of texture: 4px
 					self.bg:SetSize(16, 4 + 8 * val / 10)
 					-- Show at least the empty 4 bottom pixels + val% of the 8 pixels of the actual dot = 12px max
@@ -969,30 +927,18 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 				end
 			end)
 		end
-		-- for i = 1, 6 do
-		-- 	self.Runes[runemap[i]].rid = i
-		-- end
+
+		self.Runes.PostUpdateRune = function(self, rune, rid)
+			local start, duration, runeReady = GetRuneCooldown(rid)
+			if not runeReady then
+				local val = GetTime() - start
+				-- Dot distance from top & bottom of texture: 4px
+				rune.bg:SetSize(16, 4 + 8 * val / 10)
+				-- Show at least the empty 4 bottom pixels + val% of the 8 pixels of the actual dot = 12px max
+				rune.bg:SetTexCoord(0.25, 0.5, 12 / 16 - 8 * val / 10 / 16, 1)
+			end
+		end
 	end
-
-	-- local ClassIcons = {}
-	-- local bg = {}
-	-- for index = 1, 5 do
-	-- 	local Icon = self:CreateTexture(nil, 'BACKGROUND')
-	-- 	bg[index] = Icon
-
-	-- 	-- Position and size.
-	-- 	Icon:SetSize(16, 16)
-	-- 	-- Icon:SetPoint('TOPLEFT', self, 'BOTTOMLEFT', index * Icon:GetWidth(), 0)
-	-- 	if index > 1 then Icon:SetPoint("RIGHT", bg[index - 1], "LEFT", -5, 0)
-	-- 	else Icon:SetPoint("TOPRIGHT", self, "BOTTOMRIGHT") end
-	-- 	Icon:SetTexture("Interface\\AddOns\\oUF_Hank_v3\\textures\\ClassIcons.blp")
-	-- 	Icon:SetTexCoord(18 / 64, 36 / 64, 0, 18 / 32)
-
-	-- 	ClassIcons[index] = Icon
-	-- end
-   
- --   -- Register with oUF
- --   self.ClassIcons = ClassIcons
 	
 	-- Holy power
 	if unit == "player" and select(2, UnitClass("player")) == "PALADIN" then
@@ -1651,22 +1597,11 @@ oUF:Spawn("targettarget", "oUF_ToT"):SetPoint("BOTTOMLEFT", oUF_target, "TOPLEFT
 oUF:Spawn("targettargettarget", "oUF_ToTT"):SetPoint("BOTTOMLEFT", oUF_ToT, "TOPLEFT")
 oUF:Spawn("focus", "oUF_focus"):SetPoint("CENTER", UIParent, "CENTER", -cfg.FocusFrameMargin[1], -cfg.FocusFrameMargin[2])
 oUF:Spawn("focustarget", "oUF_ToF"):SetPoint("BOTTOMLEFT", oUF_focus, "TOPLEFT", 0, 5)
--- oUF:Spawn("player", "oUF_player"):SetPoint("CENTER", UIParent, -250, -135)
--- oUF:Spawn("pet", "oUF_pet"):SetPoint("BOTTOMRIGHT", oUF_player, "TOPRIGHT")
--- oUF:Spawn("target", "oUF_target"):SetPoint("CENTER", UIParent, 285, -135)
--- oUF:Spawn("targettarget", "oUF_ToT"):SetPoint("BOTTOMLEFT", oUF_target, "TOPLEFT")
--- oUF:Spawn("targettargettarget", "oUF_ToTT"):SetPoint("BOTTOMLEFT", oUF_ToT, "TOPLEFT")
--- oUF:Spawn("focus", "oUF_focus"):SetPoint("LEFT", UIParent, 20, 26)
--- oUF:Spawn("focustarget", "oUF_ToF"):SetPoint("BOTTOMLEFT", oUF_focus, "TOPLEFT", 0, 5)
 
 for i = 1, MAX_BOSS_FRAMES do
 	oUF:Spawn("boss" .. i, "oUF_boss" .. i):SetPoint("RIGHT", UIParent, cfg.BossFrameMargin[1], -55 * (i - 1) - cfg.BossFrameMargin[2])
 	_G["oUF_boss" .. i]:SetScale(cfg.FrameScale * cfg.BossFrameScale)
 end
--- for i = 1, MAX_BOSS_FRAMES do
--- 	oUF:Spawn("boss" .. i, "oUF_boss" .. i):SetPoint("RIGHT", UIParent, -45, -55 * (i - 1) - 130)
--- 	_G["oUF_boss" .. i]:SetScale(cfg.FrameScale * cfg.BossFrameScale)
--- end
 
 oUF_player:SetScale(cfg.FrameScale)
 oUF_pet:SetScale(cfg.FrameScale)
