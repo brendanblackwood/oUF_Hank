@@ -117,8 +117,8 @@ end
 -- "You @89% « SomeTank", "SomeDD @95% « You"
 oUF.Tags.Events["threatBoss"] = "UNIT_THREAT_LIST_UPDATE"
 oUF.Tags.Methods["threatBoss"] = function(unit)
-	if GetNumGroupMembers() > 0 or GetNumPartyMembers() > 0 then
-		local prefix, num = GetNumGroupMembers() > 0 and "raid" or "party", GetNumGroupMembers() > 0 and GetNumGroupMembers() or GetNumGroupMembers()
+	if GetNumGroupMembers() > 0 or GetNumSubgroupMembers() > 0 then
+		local prefix, num = GetNumGroupMembers() > 0 and "raid" or "party", GetNumGroupMembers() > 0 and GetNumGroupMembers() or GetNumSubgroupMembers()
 		local isTanking, _, _, scaledPercent = UnitDetailedThreatSituation("player", unit)
 		if isTanking then
 			local highestThreat, highestThreatUnit = 0, nil
