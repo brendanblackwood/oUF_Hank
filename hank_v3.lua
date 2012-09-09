@@ -928,8 +928,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 			end)
 		end
 
-		self.Runes.PostUpdateRune = function(self, rune, rid)
-			local start, duration, runeReady = GetRuneCooldown(rid)
+		self.Runes.PostUpdateRune = function(self, rune, rid, start, duration, runeReady)
 			if not runeReady then
 				local val = GetTime() - start
 				-- Dot distance from top & bottom of texture: 4px
