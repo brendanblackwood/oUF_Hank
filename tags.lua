@@ -128,10 +128,10 @@ oUF.Tags.Methods["threatBoss"] = function(unit)
 					highestThreat = scaledPercent
 					highestThreatUnit = prefix .. i
 				end
-				local _, _, scaledPercent = UnitDetailedThreatSituation(prefix .. i .. "pet", unit)
+				local _, _, scaledPercent = UnitDetailedThreatSituation(prefix .. "pet" .. i, unit)
 				if (scaledPercent or 0) > highestThreat then
 					highestThreat = scaledPercent
-					highestThreatUnit = prefix .. i .. "pet"
+					highestThreatUnit = prefix .. "pet" .. i
 				end
 			end
 			if highestThreatUnit == nil then
@@ -153,12 +153,12 @@ oUF.Tags.Methods["threatBoss"] = function(unit)
 						return ("You @%d%% \194\171 %s"):format(scaledPercent or 0, UnitName(prefix .. i))
 					end
 				end
-				isTanking = UnitDetailedThreatSituation(prefix .. i .. "pet", unit)
+				isTanking = UnitDetailedThreatSituation(prefix .. "pet" .. i, unit)
 				if isTanking then
 					if cfg.ColorThreat then
 						return ("You @|cFF%.2x%.2x%.2x%d%%|r \194\171 %s"):format(255 * 0.75 * (scaledPercent or 0) / 100, 255 * 0.75 - (255 * 0.75 * (scaledPercent or 0) / 100), 0, scaledPercent or 0, UnitName(prefix .. i .. "pet"))
 					else
-						return ("You @%d%% \194\171 %s"):format(scaledPercent or 0, UnitName(prefix .. i .. "pet"))
+						return ("You @%d%% \194\171 %s"):format(scaledPercent or 0, UnitName(prefix .. "pet" .. i))
 					end
 				end
 			end
