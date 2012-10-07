@@ -13,7 +13,7 @@ FocusFrameScale = 0.6,
 -- Margin for player / target frames (x, y from the center of the screen)
 FrameMargin = {200, 300},
 -- Vertical margin for focus frame (from the center of the screen)
-FocusFrameMarginY = 300,
+FocusFrameMargin = {0, 300},
 -- Margin for boss frames (x, y from the right edge)
 BossFrameMargin = {-10, -480},
 -- Boss frame scale (size of boss frame = FrameScale * BossFrameScale)

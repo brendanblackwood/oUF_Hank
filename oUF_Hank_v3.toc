@@ -1,14 +1,15 @@
-## Interface: 40200
+## Interface: 50500
 ## Title: oUF_Hank_v3
 ## Author: Hank
-## Version: 3.0.11
+## Maintainer: Gwyd
+## Version: 5.0.5
 ## Dependencies: oUF
-## OptionalDeps: oUF_SpellRange, oUF_Totembar
+## OptionalDeps: oUF_SpellRange, oUF_Totembar, oUF_WarlockSpecBars
 ## Notes: oUF layout for |cFFFFA628hank|rui
-## X-RelSite-WoWI: 16239
+## X-RelSite-WoWI: 21474
 ## X-WoWIPortal: hankthetank
 
-config.lua
+config.default.lua
 tags.lua
-custom_modifications.lua
+custom_modifications.default.lua
 hank_v3.lua

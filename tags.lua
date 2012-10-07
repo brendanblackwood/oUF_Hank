@@ -156,7 +156,7 @@ oUF.Tags.Methods["threatBoss"] = function(unit)
 				isTanking = UnitDetailedThreatSituation(prefix .. "pet" .. i, unit)
 				if isTanking then
 					if cfg.ColorThreat then
-						return ("You @|cFF%.2x%.2x%.2x%d%%|r \194\171 %s"):format(255 * 0.75 * (scaledPercent or 0) / 100, 255 * 0.75 - (255 * 0.75 * (scaledPercent or 0) / 100), 0, scaledPercent or 0, UnitName(prefix .. i .. "pet"))
+						return ("You @|cFF%.2x%.2x%.2x%d%%|r \194\171 %s"):format(255 * 0.75 * (scaledPercent or 0) / 100, 255 * 0.75 - (255 * 0.75 * (scaledPercent or 0) / 100), 0, scaledPercent or 0, UnitName(prefix .. "pet" .. i))
 					else
 						return ("You @%d%% \194\171 %s"):format(scaledPercent or 0, UnitName(prefix .. "pet" .. i))
 					end

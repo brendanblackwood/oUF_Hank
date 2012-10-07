@@ -1,6 +1,22 @@
 local oUF_Hank = {}
 local cfg = oUF_Hank_config
 
+-- GLOBALS: oUF_player, oUF_pet, oUF_target, oUF_focus
+-- GLOBALS: _G, MIRRORTIMER_NUMTIMERS, SPELL_POWER_HOLY_POWER, MAX_TOTEMS, MAX_COMBO_POINTS, DebuffTypeColor
+-- GLOBALS: ToggleDropDownMenu, UnitIsUnit, GetTime, AnimateTexCoords, GetEclipseDirection, MirrorTimerColors, GetTalentInfo, UnitHasVehicleUI, UnitHealth, UnitHealthMax, UnitPower, UnitIsDead, UnitIsGhost, UnitIsConnected, UnitAffectingCombat, GetLootMethod, UnitIsGroupLeader, UnitIsPVPFreeForAll, UnitIsPVP, UnitInRaid, IsResting, UnitAura, UnitCanAttack, UnitIsGroupAssistant, GetRuneCooldown, UnitClass, CancelUnitBuff, CreateFrame, IsAddOnLoaded, UnitFrame_OnEnter, UnitFrame_OnLeave
+local unpack = unpack
+local pairs = pairs
+local ipairs = ipairs
+local select = select
+local tinsert = table.insert
+local ceil = math.ceil
+local floor = math.floor
+local upper = string.upper
+local strlen = string.len
+local strsub = string.sub
+local gmatch = string.gmatch
+local match = string.match
+
 oUF_Hank.digitTexCoords = {
 	["1"] = {1, 20},
 	["2"] = {21, 31},
@@ -20,6 +36,37 @@ oUF_Hank.digitTexCoords = {
 	["height"] = 42,
 	["texWidth"] = 512,
 	["texHeight"] = 128
+}
+
+oUF_Hank.classResources = {
+	['PALADIN'] = {
+		inactive = {'Interface\\AddOns\\oUF_Hank_v3\\textures\\HolyPower.blp', { 0, 18/64, 0, 18/32 }},
+		active = {'Interface\\AddOns\\oUF_Hank_v3\\textures\\HolyPower.blp', { 18/64, 36/64, 0, 18/32 }},
+		size = {18, 18},
+	},
+	['MONK'] = {
+		inactive = {'Interface\\PlayerFrame\\MonkNoPower'},
+		active = {'Interface\\PlayerFrame\\MonkLightPower'},
+		size = {20, 20},
+	},
+	['PRIEST'] = {
+		inactive = {'Interface\\PlayerFrame\\Priest-ShadowUI', { 76/256, 112/256, 57/128, 94/128 }},
+		active = {'Interface\\PlayerFrame\\Priest-ShadowUI', { 116/256, 152/256, 57/128, 94/128 }},
+		size = {28, 28},
+	},
+	['SHAMAN'] = {
+		inactive = {'Interface\\AddOns\\oUF_Hank_v3\\textures\\blank.blp', { 0, 23/128, 0, 20/32 }},
+		active = {'Interface\\AddOns\\oUF_Hank_v3\\textures\\totems.blp', { (1+23)/128, ((23*2)+1)/128, 0, 20/32 }},
+		size = {23, 20},
+		spacing = -3,
+		inverse = true,
+	},
+	['WARLOCK'] = {
+		inactive = {'Interface\\AddOns\\oUF_Hank_v3\\textures\\shard_bg.blp'},
+		active = {'Interface\\AddOns\\oUF_Hank_v3\\textures\\shard.blp'},
+		size = {16, 16},
+		spacing = 5,
+	}
 }
 
 local fntBig = CreateFont("UFFontBig")
@@ -42,16 +89,16 @@ local canDispel = {}
 -- Unit menu
 oUF_Hank.menu = function(self)
 	local unit = self.unit:sub(1, -2)
-	local cunit = self.unit:gsub("(.)", string.upper, 1)
-	
+	local cunit = self.unit:gsub("(.)", upper, 1)
+
 	-- Swap menus in vehicle
 	if self == oUF_player and cunit=="Vehicle" then cunit = "Player" end
 	if self == oUF_pet and cunit=="Player" then cunit = "Pet" end
 
 	if(unit == "party" or unit == "partypet") then
-		ToggleDropDownMenu(1, nil, _G["PartyMemberFrame"..self.id.."DropDown"], "cursor", 0, 0)
+		ToggleDropDownMenu(nil, nil, _G["PartyMemberFrame"..self.id.."DropDown"], "cursor", 0, 0)
 	elseif(_G[cunit.."FrameDropDown"]) then
-		ToggleDropDownMenu(1, nil, _G[cunit.."FrameDropDown"], "cursor", 0, 0)
+		ToggleDropDownMenu(nil, nil, _G[cunit.."FrameDropDown"], "cursor", 0, 0)
 	end
 end
 
@@ -100,7 +147,7 @@ oUF_Hank.AdjustMirrorBars = function()
 		text:ClearAllPoints()
 		text:SetPoint("TOPLEFT", statusbar, "TOPLEFT", 10, 0)
 		text:SetPoint("BOTTOMRIGHT", statusbar, "BOTTOMRIGHT", -10, 0)
-	end	
+	end
 end
 
 -- Update the dispel table after talent changes
@@ -115,14 +162,15 @@ oUF_Hank.UpdateDispel = function()
 		["HUNTER"] = {},
 		["ROGUE"] = {},
 		["WARRIOR"] = {},
-		["DEATHKNIGHT"] = {}
+		["DEATHKNIGHT"] = {},
+		["MONK"] = {["Poison"] = true, ["Disease"] = true}
 	}
 end
 
 -- This is where the magic happens. Handle health update, display digit textures
 oUF_Hank.UpdateHealth = function(self)
 	local h, hMax
-	
+
 	-- In vehicle
 	if self.unit == "player" and UnitHasVehicleUI("player") then
 		h, hMax = UnitHealth("pet"), UnitHealthMax("pet")
@@ -131,11 +179,11 @@ oUF_Hank.UpdateHealth = function(self)
 	end
 
 	local status = (not UnitIsConnected(self.unit) or nil) and "Off" or UnitIsGhost(self.unit) and "G" or UnitIsDead(self.unit) and "X"
-	
+
 	if not status then
 		local hPerc = ("%d%%"):format(h / hMax * 100 + 0.5)
-		local len = string.len(hPerc)
-		
+		local len = strlen(hPerc)
+
 		if self.unit:find("boss") then
 			self.health[1]:SetSize(oUF_Hank.digitTexCoords["B"][2], oUF_Hank.digitTexCoords["height"])
 			self.health[1]:SetTexCoord(oUF_Hank.digitTexCoords["B"][1] / oUF_Hank.digitTexCoords["texWidth"], (oUF_Hank.digitTexCoords["B"][1] + oUF_Hank.digitTexCoords["B"][2]) / oUF_Hank.digitTexCoords["texWidth"], 1 / oUF_Hank.digitTexCoords["texHeight"], (1 + oUF_Hank.digitTexCoords["height"]) / oUF_Hank.digitTexCoords["texHeight"])
@@ -156,9 +204,9 @@ oUF_Hank.UpdateHealth = function(self)
 				else
 					local digit
 					if self == oUF_player then
-						digit = string.sub(hPerc , -i, -i)
+						digit = strsub(hPerc , -i, -i)
 					elseif self == oUF_target or self == oUF_focus then
-						digit = string.sub(hPerc , i, i)
+						digit = strsub(hPerc , i, i)
 					end
 					self.health[5 - i]:SetSize(oUF_Hank.digitTexCoords[digit][2], oUF_Hank.digitTexCoords["height"])
 					self.health[5 - i]:SetTexCoord(oUF_Hank.digitTexCoords[digit][1] / oUF_Hank.digitTexCoords["texWidth"], (oUF_Hank.digitTexCoords[digit][1] + oUF_Hank.digitTexCoords[digit][2]) / oUF_Hank.digitTexCoords["texWidth"], 1 / oUF_Hank.digitTexCoords["texHeight"], (1 + oUF_Hank.digitTexCoords["height"]) / oUF_Hank.digitTexCoords["texHeight"])
@@ -168,7 +216,7 @@ oUF_Hank.UpdateHealth = function(self)
 					self.healthFill[5 - i]:Show()
 				end
 			end
-			
+
 			if self == oUF_player then
 				self.power:SetPoint("BOTTOMRIGHT", self.health[5 - len], "BOTTOMLEFT", -5, 0)
 			elseif self == oUF_target or self == oUF_focus then
@@ -186,11 +234,11 @@ oUF_Hank.UpdateHealth = function(self)
 				self.healthFill[i]:Hide()
 				self.health[i]:Hide()
 			end
-			
+
 			self.health[4]:SetSize(oUF_Hank.digitTexCoords[status][2], oUF_Hank.digitTexCoords["height"])
 			self.health[4]:SetTexCoord(oUF_Hank.digitTexCoords[status][1] / oUF_Hank.digitTexCoords["texWidth"], (oUF_Hank.digitTexCoords[status][1] + oUF_Hank.digitTexCoords[status][2]) / oUF_Hank.digitTexCoords["texWidth"], 1 / oUF_Hank.digitTexCoords["texHeight"], (1 + oUF_Hank.digitTexCoords["height"]) / oUF_Hank.digitTexCoords["texHeight"])
 			self.health[4]:Show()
-	
+
 			if self == oUF_player then
 				self.power:SetPoint("BOTTOMRIGHT", self.health[4], "BOTTOMLEFT", -5, 0)
 			elseif self == oUF_target or self == oUF_focus then
@@ -218,17 +266,17 @@ oUF_Hank.UpdateStatus = function(self)
 		["P"] = {"PvP", UnitIsPVPFreeForAll("player") or UnitIsPVP("player")},
 		["A"] = {"Assistant", UnitInRaid("player") and UnitIsGroupAssistant("player") and not UnitIsGroupLeader("player")},
 	}
-	
-	for i = -1, -string.len(cfg.StatusIcons), -1 do
-		if icons[string.sub(cfg.StatusIcons, i, i)][2] then
-			self[icons[string.sub(cfg.StatusIcons, i, i)][1]]:ClearAllPoints()
-			self[icons[string.sub(cfg.StatusIcons, i, i)][1]]:SetPoint(unpack(lastElement))
-			self[icons[string.sub(cfg.StatusIcons, i, i)][1]]:Show()
+
+	for i = -1, -strlen(cfg.StatusIcons), -1 do
+		if icons[strsub(cfg.StatusIcons, i, i)][2] then
+			self[icons[strsub(cfg.StatusIcons, i, i)][1]]:ClearAllPoints()
+			self[icons[strsub(cfg.StatusIcons, i, i)][1]]:SetPoint(unpack(lastElement))
+			self[icons[strsub(cfg.StatusIcons, i, i)][1]]:Show()
 			-- Arrange any successive icon to the last one
-			lastElement = {"RIGHT", self[icons[string.sub(cfg.StatusIcons, i, i)][1]], "LEFT"}
+			lastElement = {"RIGHT", self[icons[strsub(cfg.StatusIcons, i, i)][1]], "LEFT"}
 		else
 			-- Condition for displaying the icon not met
-			self[icons[string.sub(cfg.StatusIcons, i, i)][1]]:Hide()
+			self[icons[strsub(cfg.StatusIcons, i, i)][1]]:Hide()
 		end
 	end
 end
@@ -252,24 +300,24 @@ oUF_Hank.PostUpdateIcon = function(icons, unit, icon, index, offset)
 
 	local _, _, _, _, dtype, _, _, caster, _, _, _ = UnitAura(unit, index, icon.filter)
 	if caster == "vehicle" then caster = "player" end
-	
-	if icon.filter == "HELPFUL" and not UnitCanAttack("player", unit) and caster == "player" and cfg["Auras" .. string.upper(unit)].StickyAuras.myBuffs then
+
+	if icon.filter == "HELPFUL" and not UnitCanAttack("player", unit) and caster == "player" and cfg["Auras" .. upper(unit)].StickyAuras.myBuffs then
 		-- Sticky aura: myBuffs
 		icon.icon:SetVertexColor(unpack(cfg.AuraStickyColor))
 		icon.icon:SetDesaturated(false)
-	elseif icon.filter == "HARMFUL" and UnitCanAttack("player", unit) and caster == "player" and cfg["Auras" .. string.upper(unit)].StickyAuras.myDebuffs then
+	elseif icon.filter == "HARMFUL" and UnitCanAttack("player", unit) and caster == "player" and cfg["Auras" .. upper(unit)].StickyAuras.myDebuffs then
 		-- Sticky aura: myDebuffs
 		icon.icon:SetVertexColor(unpack(cfg.AuraStickyColor))
 		icon.icon:SetDesaturated(false)
-	elseif icon.filter == "HARMFUL" and UnitCanAttack("player", unit) and caster == "pet" and cfg["Auras" .. string.upper(unit)].StickyAuras.petDebuffs then
+	elseif icon.filter == "HARMFUL" and UnitCanAttack("player", unit) and caster == "pet" and cfg["Auras" .. upper(unit)].StickyAuras.petDebuffs then
 		-- Sticky aura: petDebuffs
 		icon.icon:SetVertexColor(unpack(cfg.AuraStickyColor))
 		icon.icon:SetDesaturated(false)
-	elseif icon.filter == "HARMFUL" and not UnitCanAttack("player", unit) and canDispel[({UnitClass("player")})[2]][dtype] and cfg["Auras" .. string.upper(unit)].StickyAuras.curableDebuffs then
+	elseif icon.filter == "HARMFUL" and not UnitCanAttack("player", unit) and canDispel[({UnitClass("player")})[2]][dtype] and cfg["Auras" .. upper(unit)].StickyAuras.curableDebuffs then
 		-- Sticky aura: curableDebuffs
 		icon.icon:SetVertexColor(DebuffTypeColor[dtype].r, DebuffTypeColor[dtype].g, DebuffTypeColor[dtype].b)
 		icon.icon:SetDesaturated(false)
-	elseif icon.filter == "HELPFUL" and UnitCanAttack("player", unit) and UnitIsUnit(unit, caster or "") and cfg["Auras" .. string.upper(unit)].StickyAuras.enemySelfBuffs then
+	elseif icon.filter == "HELPFUL" and UnitCanAttack("player", unit) and UnitIsUnit(unit, caster or "") and cfg["Auras" .. upper(unit)].StickyAuras.enemySelfBuffs then
 		-- Sticky aura: enemySelfBuffs
 		icon.icon:SetVertexColor(unpack(cfg.AuraStickyColor))
 		icon.icon:SetDesaturated(false)
@@ -282,34 +330,34 @@ end
 -- Custom filters
 oUF_Hank.customFilter = function(icons, unit, icon, name, rank, texture, count, dtype, duration, timeLeft, caster)
 	if caster == "vehicle" then caster = "player" end
-	if icons.filter == "HELPFUL" and not UnitCanAttack("player", unit) and caster == "player" and cfg["Auras" .. string.upper(unit)].StickyAuras.myBuffs then
+	if icons.filter == "HELPFUL" and not UnitCanAttack("player", unit) and caster == "player" and cfg["Auras" .. upper(unit)].StickyAuras.myBuffs then
 		-- Sticky aura: myBuffs
 		return true
-	elseif icons.filter == "HARMFUL" and UnitCanAttack("player", unit) and caster == "player" and cfg["Auras" .. string.upper(unit)].StickyAuras.myDebuffs then
+	elseif icons.filter == "HARMFUL" and UnitCanAttack("player", unit) and caster == "player" and cfg["Auras" .. upper(unit)].StickyAuras.myDebuffs then
 		-- Sticky aura: myDebuffs
 		return true
-	elseif icons.filter == "HARMFUL" and UnitCanAttack("player", unit) and caster == "pet" and cfg["Auras" .. string.upper(unit)].StickyAuras.petDebuffs then
+	elseif icons.filter == "HARMFUL" and UnitCanAttack("player", unit) and caster == "pet" and cfg["Auras" .. upper(unit)].StickyAuras.petDebuffs then
 		-- Sticky aura: petDebuffs
 		return true
-	elseif icons.filter == "HARMFUL" and not UnitCanAttack("player", unit) and canDispel[({UnitClass("player")})[2]][dtype] and cfg["Auras" .. string.upper(unit)].StickyAuras.curableDebuffs then
+	elseif icons.filter == "HARMFUL" and not UnitCanAttack("player", unit) and canDispel[({UnitClass("player")})[2]][dtype] and cfg["Auras" .. upper(unit)].StickyAuras.curableDebuffs then
 		-- Sticky aura: curableDebuffs
 		return true
 	-- Usage of UnitIsUnit: Call from within focus frame will return "target" as caster if focus is targeted (player > target > focus)
-	elseif icons.filter == "HELPFUL" and UnitCanAttack("player", unit) and UnitIsUnit(unit, caster or "") and cfg["Auras" .. string.upper(unit)].StickyAuras.enemySelfBuffs then
+	elseif icons.filter == "HELPFUL" and UnitCanAttack("player", unit) and UnitIsUnit(unit, caster or "") and cfg["Auras" .. upper(unit)].StickyAuras.enemySelfBuffs then
 		-- Sticky aura: enemySelfBuffs
 		return true
 	else
 		-- Aura is not sticky, filter is set to blacklist
-		if cfg["Auras" .. string.upper(unit)].FilterMethod[icons.filter == "HELPFUL" and "Buffs" or "Debuffs"] == "BLACKLIST" then
-			for _, v in ipairs(cfg["Auras" .. string.upper(unit)].BlackList) do
+		if cfg["Auras" .. upper(unit)].FilterMethod[icons.filter == "HELPFUL" and "Buffs" or "Debuffs"] == "BLACKLIST" then
+			for _, v in ipairs(cfg["Auras" .. upper(unit)].BlackList) do
 				if v == name then
 					return false
 				end
 			end
 			return true
 		-- Aura is not sticky, filter is set to whitelist
-		elseif cfg["Auras" .. string.upper(unit)].FilterMethod[icons.filter == "HELPFUL" and "Buffs" or "Debuffs"] == "WHITELIST" then
-			for _, v in ipairs(cfg["Auras" .. string.upper(unit)].WhiteList) do
+		elseif cfg["Auras" .. upper(unit)].FilterMethod[icons.filter == "HELPFUL" and "Buffs" or "Debuffs"] == "WHITELIST" then
+			for _, v in ipairs(cfg["Auras" .. upper(unit)].WhiteList) do
 				if v == name then
 					return true
 				end
@@ -325,7 +373,7 @@ end
 -- Aura mouseover
 oUF_Hank.OnEnterAura = function(self, icon)
 	-- Aura magnification
-	if isDebuff then
+	if icon.isDebuff then
 		self.HighlightAura:SetSize(cfg.DebuffSize * cfg.AuraMagnification, cfg.DebuffSize * cfg.AuraMagnification)
 		self.HighlightAura.icon:SetSize(cfg.DebuffSize * cfg.AuraMagnification, cfg.DebuffSize * cfg.AuraMagnification)
 		self.HighlightAura.border:SetSize(cfg.DebuffSize * cfg.AuraMagnification * 1.1, cfg.DebuffSize * cfg.AuraMagnification * 1.1)
@@ -401,14 +449,14 @@ oUF_Hank.PostCastStart = function(castbar, unit, name, rank, castid)
 		castbar.PreciseSafeZone:SetPoint("BOTTOMRIGHT")
 		castbar.PreciseSafeZone:SetDrawLayer("BACKGROUND")
 	end
-	
+
 	if unit ~= "focus" then
 		-- Cast layout
 		castbar.Text:SetJustifyH("LEFT")
 		castbar.Time:SetJustifyH("LEFT")
 		if cfg.CastbarIcon then castbar.Dummy.Icon:SetTexture(castbar.Icon:GetTexture()) end
 	end
-	
+
 	-- Uninterruptible spells
 	if castbar.Shield:IsShown() and UnitCanAttack("player", unit) then
 		castbar.Background:SetBackdropBorderColor(unpack(cfg.colors.castbar.noInterrupt))
@@ -438,7 +486,7 @@ oUF_Hank.PostChannelStart = function(castbar, unit, name, rank)
 		castbar.Time:SetJustifyH("RIGHT")
 		if cfg.CastbarIcon then castbar.Dummy.Icon:SetTexture(castbar.Icon:GetTexture()) end
 	end
-	
+
 	if castbar.Shield:IsShown() and UnitCanAttack("player", unit) then
 		castbar.Background:SetBackdropBorderColor(unpack(cfg.colors.castbar.noInterrupt))
 	else
@@ -489,18 +537,17 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 	self:SetScript("OnLeave", UnitFrame_OnLeave)
 	self:RegisterForClicks("AnyDown")
 	self:SetAttribute("*type2", "menu")
-	
+
 	self.colors = cfg.colors
-	
+
 	-- Update dispel table on talent update
 	if unit == "player" then self:RegisterEvent("PLAYER_TALENT_UPDATE", oUF_Hank.UpdateDispel) end
-	
+
 	-- HP%
 	local health = {}
 	local healthFill = {}
-	
+
 	if unit == "player" or unit == "target" or unit == "focus" or unit:find("boss") then
-		
 		self:RegisterEvent("UNIT_HEALTH", function(_, _, ...)
 			if unit == ... then
 				oUF_Hank.UpdateHealth(self)
@@ -508,7 +555,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 				oUF_Hank.UpdateHealth(self)
 			end
 		end)
-		
+
 		self:RegisterEvent("UNIT_MAXHEALTH", function(_, _, ...)
 			if unit == ... then
 				oUF_Hank.UpdateHealth(self)
@@ -516,10 +563,10 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 				oUF_Hank.UpdateHealth(self)
 			end
 		end)
-		
+
 		-- Health update on unit switch
 		-- Thanks @ pelim for this approach
-		table.insert(self.__elements, oUF_Hank.UpdateHealth)
+		tinsert(self.__elements, oUF_Hank.UpdateHealth)
 
 		for i = unit:find("boss") and 1 or 4, 1, -1 do
 			health[i] = self:CreateTexture(nil, "ARTWORK")
@@ -530,7 +577,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 			healthFill[i]:SetVertexColor(unpack(cfg.colors.text))
 			healthFill[i]:Hide()
 		end
-		
+
 		if unit == "player" then
 			health[4]:SetPoint("RIGHT")
 			health[3]:SetPoint("RIGHT", health[4], "LEFT")
@@ -544,7 +591,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 		elseif unit:find("boss") then
 			health[1]:SetPoint("RIGHT")
 		end
-		
+
 		if not unit:find("boss") then
 			healthFill[4]:SetPoint("BOTTOM", health[4])
 			healthFill[3]:SetPoint("BOTTOM", health[3])
@@ -554,30 +601,31 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 
 		self.health = health
 		self.healthFill = healthFill
-		
+
 		-- Reanchoring handled in UpdateHealth()
 	end
 
 	local name, power
-	
+	local playerClass = select(2, UnitClass("player"))
+
 	-- Power, threat
 	if unit == "player" or unit == "target" or unit == "focus" or unit:find("boss") then
 		power = self:CreateFontString(nil, "OVERLAY")
 		power:SetFontObject("UFFontMedium")
-		
+
 		if unit == "player" then power:SetPoint("BOTTOMRIGHT", health[4], "BOTTOMLEFT", -5, 0)
 		elseif unit == "target" or unit == "focus" then power:SetPoint("BOTTOMLEFT", health[4], "BOTTOMRIGHT", 5, 0)
 		elseif unit:find("boss") then power:SetPoint("BOTTOMRIGHT", health[1], "BOTTOMLEFT", -5, 0) end
-		
+
 		if unit == "player" then self:Tag(power, "[ppDetailed]")
 		elseif unit == "target" or unit == "focus" then self:Tag(power, cfg.ShowThreat and "[hpDetailed] || [ppDetailed] [threatPerc]" or "[hpDetailed] || [ppDetailed]")
 		elseif unit:find("boss") then self:Tag(power, cfg.ShowThreat and "[threatBoss] || [perhp]%" or "[perhp]%") end
 
 		self.power = power
 	end
-		
+
 	-- Name
-	if unit == "target" or unit == "focus" then 
+	if unit == "target" or unit == "focus" then
 		name = self:CreateFontString(nil, "OVERLAY")
 		name:SetFontObject("UFFontBig")
 		name:SetPoint("BOTTOMLEFT", power, "TOPLEFT")
@@ -599,20 +647,20 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 		if unit == "targettarget" or unit == "focustarget" then self:Tag(name, "\226\128\186  [smartName] @[perhp]%")
 		elseif unit == "targettargettarget" then self:Tag(name, "\194\187 [smartName] @[perhp]%") end
 	end
-	
+
 	self.name = name
-	
+
 	-- Status icons
 	if unit == "player" then
 		-- Remove invalid or duplicate placeholders
 		local fixedString = ""
 
-		for placeholder in string.gmatch(cfg.StatusIcons, "[CRPMAL]") do
-			fixedString = fixedString .. (string.match(fixedString, placeholder) and "" or placeholder)
+		for placeholder in gmatch(cfg.StatusIcons, "[CRPMAL]") do
+			fixedString = fixedString .. (match(fixedString, placeholder) and "" or placeholder)
 		end
 
 		cfg.StatusIcons = fixedString
-		
+
 		-- Create the status icons
 		for i, icon in ipairs({
 			{"C", "Combat"},
@@ -622,16 +670,16 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 			{"P", "PvP"},
 			{"A", "Assistant"},
 		}) do
-			if string.match(cfg.StatusIcons, icon[1]) then
+			if match(cfg.StatusIcons, icon[1]) then
 				self[icon[2]] = self:CreateTexture(nil, "OVERLAY")
 				self[icon[2]]:SetSize(24, 24)
 				self[icon[2]]:SetTexture("Interface\\AddOns\\oUF_Hank_v3\\textures\\statusicons.blp")
 				self[icon[2]]:SetTexCoord((i - 1) * 24 / 256, i * 24 / 256, 0, 24 / 32)
 				self[icon[2]].Override = oUF_Hank.UpdateStatus
 			end
-			
+
 		end
-		
+
 		-- Anchoring handled in UpdateStatus()
 	end
 
@@ -648,14 +696,13 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 		self.RaidIcon:SetTexture("Interface\\AddOns\\oUF_Hank_v3\\textures\\raidicons.blp")
 		self.RaidIcon:SetPoint("LEFT", self.name, "RIGHT", 10, 0)
 		self.RaidIcon:SetPoint("TOP", self, "TOP", 0, -5)
-		
+
 		-- Anchoring on name update
-		table.insert(self.__elements, oUF_Hank.PostUpdateName)
+		tinsert(self.__elements, oUF_Hank.PostUpdateName)
 		self:RegisterEvent("PLAYER_FLAGS_CHANGED", function(_, _, unit)
 			if unit == self.unit then
 				oUF_Hank.PostUpdateName(unit)
 			end
-
 		end)
 	elseif unit:find("boss") then
 		self.RaidIcon = self:CreateTexture(nil)
@@ -667,13 +714,13 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 
 	-- XP, reputation
 	if unit == "player" and cfg.ShowXP then
-		xprep = self:CreateFontString(nil, "OVERLAY")
+		local xprep = self:CreateFontString(nil, "OVERLAY")
 		xprep:SetFontObject("UFFontMedium")
 		xprep:SetPoint("RIGHT", power, "RIGHT")
 		xprep:SetAlpha(0)
 		self:Tag(xprep, "[xpRep]")
 		self.xprep = xprep
-		
+
 		-- Some animation dummies
 		local xprepDummy = self:CreateFontString(nil, "OVERLAY")
 		xprepDummy:SetFontObject("UFFontMedium")
@@ -688,7 +735,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 		raidIconDummy:SetTexture("Interface\\AddOns\\oUF_Hank_v3\\textures\\raidicons.blp")
 		raidIconDummy:SetAllPoints(self.RaidIcon)
 		raidIconDummy:Hide()
-		
+
 		local animXPFadeIn = xprepDummy:CreateAnimationGroup()
 		-- A short delay so the user needs to mouseover a short time for the xp/rep display to show up
 		local delayXP = animXPFadeIn:CreateAnimation("Alpha")
@@ -700,7 +747,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 		alphaInXP:SetSmoothing("OUT")
 		alphaInXP:SetDuration(1.5)
 		alphaInXP:SetOrder(2)
-		
+
 		local animPowerFadeOut = powerDummy:CreateAnimationGroup()
 		local delayPower = animPowerFadeOut:CreateAnimation("Alpha")
 		delayPower:SetChange(0)
@@ -711,7 +758,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 		alphaOutPower:SetSmoothing("OUT")
 		alphaOutPower:SetDuration(1.5)
 		alphaOutPower:SetOrder(2)
-		
+
 		local animRaidIconFadeOut = raidIconDummy:CreateAnimationGroup()
 		local delayIcon = animRaidIconFadeOut:CreateAnimation("Alpha")
 		delayIcon:SetChange(0)
@@ -722,14 +769,14 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 		alphaOutIcon:SetSmoothing("OUT")
 		alphaOutIcon:SetDuration(0.5)
 		alphaOutIcon:SetOrder(2)
-		
+
 		animXPFadeIn:SetScript("OnFinished", function()
 			xprep:SetAlpha(1)
 			xprepDummy:Hide()
 		end)
 		animPowerFadeOut:SetScript("OnFinished", function() powerDummy:Hide() end)
 		animRaidIconFadeOut:SetScript("OnFinished", function() raidIconDummy:Hide() end)
-		
+
 		self:HookScript("OnEnter", function(_, motion)
 			if motion then
 				self.power:SetAlpha(0)
@@ -745,7 +792,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 				if self.RaidIcon:IsShown() then animRaidIconFadeOut:Play() end
 			end
 		end)
-		
+
 		self:HookScript("OnLeave", function()
 			if animXPFadeIn:IsPlaying() then animXPFadeIn:Stop() end
 			if animPowerFadeOut:IsPlaying() then animPowerFadeOut:Stop() end
@@ -760,7 +807,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 	end
 
 	-- Combo points
-	if unit == "target" and (select(2, UnitClass("player")) == "ROGUE" or select(2, UnitClass("player")) == "DRUID") then
+	if unit == "target" and (playerClass == "ROGUE" or playerClass == "DRUID") then
 		local bg = {}
 		local fill = {}
 		self.CPoints = {}
@@ -781,7 +828,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 		self.CPoints[1]:SetPoint("TOPLEFT", self, "BOTTOMLEFT")
 		self.CPoints.unit = "player"
 	end
-	
+
 	-- Auras
 	if unit == "target" or unit == "focus" then
 		-- Buffs
@@ -797,7 +844,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 		self.Buffs.spacing = cfg.AuraSpacing
 		self.Buffs.initialAnchor = "LEFT"
 		self.Buffs["growth-y"] = "DOWN"
-		self.Buffs.num = cfg["Auras" .. string.upper(unit)].MaxBuffs
+		self.Buffs.num = cfg["Auras" .. upper(unit)].MaxBuffs
 		self.Buffs.filter = "HELPFUL" -- Explicitly set the filter or the first customFilter call won't work
 
 		-- Debuffs
@@ -810,9 +857,9 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 		self.Debuffs.spacing = cfg.AuraSpacing
 		self.Debuffs.initialAnchor = "LEFT"
 		self.Debuffs["growth-y"] = "DOWN"
-		self.Debuffs.num = cfg["Auras" .. string.upper(unit)].MaxDebuffs
+		self.Debuffs.num = cfg["Auras" .. upper(unit)].MaxDebuffs
 		self.Debuffs.filter = "HARMFUL"
-		
+
 		-- Buff magnification effect on mouseover
 		self.HighlightAura = CreateFrame("Frame", nil, self)
 		self.HighlightAura:SetFrameLevel(5) -- Above auras (level 3) and their cooldown overlay (4)
@@ -823,7 +870,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 		self.HighlightAura.border = self.HighlightAura:CreateTexture(nil, "OVERLAY")
 		self.HighlightAura.border:SetTexture(cfg.AuraBorder)
 		self.HighlightAura.border:SetPoint("CENTER")
-		
+
 		self.Buffs.PostUpdateIcon = oUF_Hank.PostUpdateIcon
 		self.Debuffs.PostUpdateIcon = oUF_Hank.PostUpdateIcon
 		self.Buffs.PostCreateIcon = oUF_Hank.PostCreateIcon
@@ -832,9 +879,9 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 		self.Buffs.CustomFilter = oUF_Hank.customFilter
 		self.Debuffs.CustomFilter = oUF_Hank.customFilter
 	end
-	
+
 	-- Runes
-	if unit == "player" and select(2, UnitClass("player")) == "DEATHKNIGHT" then
+	if unit == "player" and playerClass == "DEATHKNIGHT" then
 		local runemap = { 1, 2, 5, 6, 3, 4 }
 		self.Runes = CreateFrame("Frame", nil, self)
 		self.Runes:SetPoint("TOPRIGHT", self, "BOTTOMRIGHT")
@@ -843,7 +890,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 		self.Runes.growth = "RIGHT"
 		self.Runes.height = 16
 		self.Runes.width = 16
-			
+
 		for i = 1, 6 do
 			self.Runes[i] = CreateFrame("StatusBar", nil, self.Runes)
 			self.Runes[i]:SetStatusBarTexture("Interface\\AddOns\\oUF_Hank_v3\\textures\\blank.blp")
@@ -860,20 +907,20 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 			backdrop:SetAllPoints()
 			backdrop:SetTexture("Interface\\AddOns\\oUF_Hank_v3\\textures\\combo.blp")
 			backdrop:SetTexCoord(0, 16 / 64, 0, 1)
-				
+
 			-- This is actually the fill layer, but "bg" gets automatically vertex-colored by the runebar module. So let's make use of that!
 			self.Runes[i].bg = self.Runes[i]:CreateTexture(nil, "OVERLAY")
 			self.Runes[i].bg:SetSize(16, 16)
 			self.Runes[i].bg:SetPoint("BOTTOM")
 			self.Runes[i].bg:SetTexture("Interface\\AddOns\\oUF_Hank_v3\\textures\\combo.blp")
 			self.Runes[i].bg:SetTexCoord(0.5, 0.75, 0, 1)
-				
+
 			-- Shine effect
 			local shinywheee = CreateFrame("Frame", nil, self.Runes[i])
 			shinywheee:SetAllPoints()
 			shinywheee:SetAlpha(0)
 			shinywheee:Hide()
-				
+
 			local shine = shinywheee:CreateTexture(nil, "OVERLAY")
 			shine:SetAllPoints()
 			shine:SetPoint("CENTER")
@@ -907,7 +954,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 			scaleOut:SetOrigin("CENTER", 0, 0)
 			scaleOut:SetDuration(0.4)
 			scaleOut:SetOrder(2)
-				
+
 			anim:SetScript("OnFinished", function() shinywheee:Hide() end)
 			shinywheee:SetScript("OnShow", function() anim:Play() end)
 
@@ -938,243 +985,291 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 			end
 		end
 	end
-	
-	-- Holy power
-	if unit == "player" and select(2, UnitClass("player")) == "PALADIN" then
-		local bg = {}
-		local HPowerAnim = {}
-		self.ClassIcons = {}
-		-- Helper var for animation handling
-		self.ClassIcons.lastHPow = UnitPower("player", SPELL_POWER_HOLY_POWER)
-		
-		for i = 1, 5 do
-			bg[i] = CreateFrame("Frame", nil, self)
-			bg[i]:SetSize(18, 18)
-			
-			if i > 1 then bg[i]:SetPoint("RIGHT", bg[i - 1], "LEFT", -5, 0) end
-			
-			bg[i].tex = bg[i]:CreateTexture(nil, "ARTWORK")
-			bg[i].tex:SetTexture("Interface\\AddOns\\oUF_Hank_v3\\textures\\HolyPower.blp")
-			bg[i].tex:SetTexCoord(0, 18 / 64, 0, 18 / 32)
-			bg[i].tex:SetAllPoints(bg[i])
-			self.ClassIcons[i] = bg[i]:CreateTexture(nil, "OVERLAY")
-			self.ClassIcons[i]:SetTexture("Interface\\AddOns\\oUF_Hank_v3\\textures\\HolyPower.blp")
-			self.ClassIcons[i]:SetTexCoord(18 / 64, 36 / 64, 0, 18 / 32)
-			self.ClassIcons[i]:SetAllPoints(bg[i])
-			self.ClassIcons[i]:SetVertexColor(unpack(cfg.colors.power.HOLY_POWER))
 
-			-- need access to the background in the PostUpdate function
-			self.ClassIcons[i].bg = bg[i].tex
-			
-			HPowerAnim[i] = self.ClassIcons[i]:CreateAnimationGroup()
-			local alphaIn = HPowerAnim[i]:CreateAnimation("Alpha")
+	local initClassIconAnimation, updateClassIconAnimation
+	local initClassIcons, initClassSingleIcon
+	-- animation: fade in
+	if unit == "player" and (playerClass == "MONK" or playerClass == "PALADIN") then
+		initClassIconAnimation = function(unitFrame, i)
+			unitFrame.ClassIcons.animations[i] = unitFrame.ClassIcons[i]:CreateAnimationGroup()
+			local alphaIn = unitFrame.ClassIcons.animations[i]:CreateAnimation("Alpha")
 			alphaIn:SetChange(1)
 			alphaIn:SetSmoothing("OUT")
 			alphaIn:SetDuration(1)
 			alphaIn:SetOrder(1)
-			
-			HPowerAnim[i]:SetScript("OnFinished", function() self.ClassIcons[i]:SetAlpha(1) end)
-		end
-		
-		bg[1]:SetPoint("TOPRIGHT", self, "BOTTOMRIGHT")
-		
-		self.ClassIcons.PostUpdate = function(_, currentPower, maxPower, changed)
-			-- update how many holy power icons are shown
-			if maxPower == 3 then
-				self.ClassIcons[4]:Hide()
-				self.ClassIcons[4].bg:Hide()
-				self.ClassIcons[5]:Hide()
-				self.ClassIcons[5].bg:Hide()
-			else
-				self.ClassIcons[4].bg:Show()
-				self.ClassIcons[5].bg:Show()
-			end
 
-			-- if lastHPow is nil, set it to 0
-			self.ClassIcons.lastHPow = self.ClassIcons.lastHPow and self.ClassIcons.lastHPow or 0
-			if currentPower > 0 then
-				if self.ClassIcons.lastHPow < currentPower then
+			unitFrame.ClassIcons.animations[i]:SetScript("OnFinished", function() unitFrame.ClassIcons[i]:SetAlpha(1) end)
+		end
+		updateClassIconAnimation = function(unitFrame, current, max)
+			unitFrame.ClassIcons.animLastState = unitFrame.ClassIcons.animLastState or 0
+			if current > 0 then
+				if unitFrame.ClassIcons.animLastState < current then
 					-- Play animation only when we gain power
-					self.ClassIcons[currentPower]:SetAlpha(0)
-					HPowerAnim[currentPower]:Play();
+					unitFrame.ClassIcons[current]:SetAlpha(0)
+					unitFrame.ClassIcons.animations[current]:Play();
 				end
 			else
-				for i = 1, maxPower do
+				for i = 1, max do
 					-- no holy power, stop all running animations
-					self.ClassIcons.lastHPow = currentPower
-					if HPowerAnim[i]:IsPlaying() then HPowerAnim[i]:Stop() end
-				end
-			end
-			self.ClassIcons.lastHPow = currentPower
-		end
-	end
-
-	-- Harmony Orbs
-	if unit == "player" and select(2, UnitClass("player")) == "MONK" then
-		local bg = {}
-		self.ClassIcons = {}
-
-		for i = 1, 5 do
-			bg[i] = CreateFrame("Frame", nil, self)
-			bg[i]:SetSize(20, 20)
-			
-			if i > 1 then bg[i]:SetPoint("LEFT", bg[i - 1], "RIGHT", 0, 0) end
-			
-			bg[i].tex = bg[i]:CreateTexture(nil, "ARTWORK")
-			bg[i].tex:SetTexture[[Interface\PlayerFrame\MonkNoPower]]
-			bg[i].tex:SetTexCoord(0, 1, 0, 1)
-			bg[i].tex:SetAllPoints(bg[i])
-			self.ClassIcons[i] = bg[i]:CreateTexture(nil, "OVERLAY")
-			self.ClassIcons[i]:SetTexture[[Interface\PlayerFrame\MonkLightPower]]
-			self.ClassIcons[i]:SetTexCoord(0, 1, 0, 1)
-			self.ClassIcons[i]:SetAllPoints(bg[i])
-
-			-- need access to the background in the PostUpdate function
-			self.ClassIcons[i].bg = bg[i].tex
-		end
-		
-		bg[1]:SetPoint("TOPRIGHT", self, "BOTTOMRIGHT", -78, 0)
-
-		self.ClassIcons.PostUpdate = function(_, currentChi, maxChi)
-			if maxChi == 4 then
-				self.ClassIcons[5]:Hide()
-				self.ClassIcons[5].bg:Hide()
-			else
-				self.ClassIcons[5].bg:Show()
-			end
-		end
-	end
-
-	-- Shadow Orbs
-	if unit == "player" and select(2, UnitClass("player")) == "PRIEST" then
-		local bg = {}
-		self.ClassIcons = {}
-
-		for i = 1, 3 do
-			bg[i] = CreateFrame("Frame", nil, self)
-			bg[i]:SetSize(28, 28)
-			
-			if i > 1 then bg[i]:SetPoint("LEFT", bg[i - 1], "RIGHT", 2, 0) end
-			
-			bg[i].tex = bg[i]:CreateTexture(nil, "ARTWORK")
-			bg[i].tex:SetTexture[[Interface\PlayerFrame\Priest-ShadowUI]]
-			bg[i].tex:SetTexCoord(76/256, 112/256, 57/128, 94/128)
-			bg[i].tex:SetAllPoints(bg[i])
-			self.ClassIcons[i] = bg[i]:CreateTexture(nil, "OVERLAY")
-			self.ClassIcons[i]:SetTexture[[Interface\PlayerFrame\Priest-ShadowUI]]
-			self.ClassIcons[i]:SetTexCoord(116/256, 152/256, 57/128, 94/128)
-			self.ClassIcons[i]:SetAllPoints(bg[i])
-		end
-
-		-- only 3 shadow orbs, but we need to create throwaway textures for oUF classicons
-		local throwAway = CreateFrame("Frame")
-		self.ClassIcons[4] = throwAway:CreateTexture()
-		self.ClassIcons[5] = throwAway:CreateTexture()
-		
-		bg[1]:SetPoint("TOPRIGHT", self, "BOTTOMRIGHT", -72, 0)
-	end
-	
-	-- Soul shards
-	if unit == "player" and select(2, UnitClass("player")) == "WARLOCK" then
-		local bg = {}
-		local shinywheee = {}
-		self.ClassIcons = {}
-		-- Helper var for animation handling
-		self.ClassIcons.lastShards = UnitPower(unit, SPELL_POWER_SOUL_SHARDS)
-		
-		for i = 1, 4 do
-			bg[i] = CreateFrame("Frame", nil, self)
-			bg[i]:SetSize(17, 17)
-			
-			if i > 1 then bg[i]:SetPoint("RIGHT", bg[i - 1], "LEFT", -5, 0) end
-			
-			bg[i].tex = bg[i]:CreateTexture(nil, "ARTWORK")
-			bg[i].tex:SetTexture("Interface\\AddOns\\oUF_Hank_v3\\textures\\SoulShards.blp")
-			bg[i].tex:SetTexCoord(0, 17 / 64, 0, 18 / 32)
-			bg[i].tex:SetAllPoints(bg[i])
-			self.ClassIcons[i] = bg[i]:CreateTexture(nil, "OVERLAY")
-			self.ClassIcons[i]:SetTexture("Interface\\AddOns\\oUF_Hank_v3\\textures\\SoulShards.blp")
-			self.ClassIcons[i]:SetTexCoord(17 / 64, 34 / 64, 0, 18 / 32)
-			self.ClassIcons[i]:SetAllPoints(bg[i])
-			self.ClassIcons[i]:SetVertexColor(unpack(cfg.colors.power.SOUL_SHARDS))
-
-			-- need access to the background in the PostUpdate function
-			self.ClassIcons[i].bg = bg[i].tex
-			
-			-- Shine effect
-			shinywheee[i] = CreateFrame("Frame", nil, bg[i])
-			shinywheee[i]:SetAllPoints()
-			shinywheee[i]:SetAlpha(0)
-			shinywheee[i]:Hide()
-				
-			local shine = shinywheee[i]:CreateTexture(nil, "OVERLAY")
-			shine:SetSize(25, 25)
-			shine:SetPoint("CENTER", bg[i], -2, -2)
-			shine:SetTexture("Interface\\Cooldown\\star4.blp")
-			shine:SetBlendMode("ADD")
-			
-			shinywheee[i].anim = shinywheee[i]:CreateAnimationGroup()
-			local alphaIn = shinywheee[i].anim:CreateAnimation("Alpha")
-			alphaIn:SetChange(0.3)
-			alphaIn:SetDuration(0.4)
-			alphaIn:SetOrder(1)
-			local rotateIn = shinywheee[i].anim:CreateAnimation("Rotation")
-			rotateIn:SetDegrees(-90)
-			rotateIn:SetDuration(0.4)
-			rotateIn:SetOrder(1)
-			local scaleIn = shinywheee[i].anim:CreateAnimation("Scale")
-			scaleIn:SetScale(2, 2)
-			scaleIn:SetOrigin("CENTER", 0, 0)
-			scaleIn:SetDuration(0.4)
-			scaleIn:SetOrder(1)
-			local alphaOut = shinywheee[i].anim:CreateAnimation("Alpha")
-			alphaOut:SetChange(-0.5)
-			alphaOut:SetDuration(0.4)
-			alphaOut:SetOrder(2)
-			local rotateOut = shinywheee[i].anim:CreateAnimation("Rotation")
-			rotateOut:SetDegrees(-90)
-			rotateOut:SetDuration(0.3)
-			rotateOut:SetOrder(2)
-			local scaleOut = shinywheee[i].anim:CreateAnimation("Scale")
-			scaleOut:SetScale(-2, -2)
-			scaleOut:SetOrigin("CENTER", 0, 0)
-			scaleOut:SetDuration(0.4)
-			scaleOut:SetOrder(2)
-				
-			shinywheee[i].anim:SetScript("OnFinished", function() shinywheee[i]:Hide() end)
-			shinywheee[i]:SetScript("OnShow", function() shinywheee[i].anim:Play() end)
-		end
-
-		-- max 4 soul shards, but we need to create throwaway textures for oUF classicons
-		local throwAway = CreateFrame("Frame")
-		self.ClassIcons[5] = throwAway:CreateTexture()
-		
-		self.ClassIcons.PostUpdate = function(_, currentShards, maxShards)
-			if maxShards == 3 then
-				self.ClassIcons[4]:Hide()
-				self.ClassIcons[4].bg:Hide()
-			else
-				self.ClassIcons[4].bg:Show()
-			end
-
-			self.ClassIcons.lastShards = self.ClassIcons.lastShards and self.ClassIcons.lastShards or 0
-			if currentShards > 0 then
-				if self.ClassIcons.lastShards <= currentShards then
-					-- Play animation only on shard gains
-					for i = self.ClassIcons.lastShards + 1, currentShards do
-						-- For each shard gained
-						shinywheee[i]:Show()
+					unitFrame.ClassIcons.animLastState = current
+					if unitFrame.ClassIcons.animations[i]:IsPlaying() then
+						unitFrame.ClassIcons.animations[i]:Stop()
 					end
 				end
 			end
-			self.ClassIcons.lastShards = currentShards
+			unitFrame.ClassIcons.animLastState = current
 		end
-		
-		bg[1]:SetPoint("TOPRIGHT", self, "BOTTOMRIGHT")
 	end
-	
+
+	-- Warlock secondary resource (requires oUF_WarlockSpecBars)
+	local showWarlockBar = playerClass == "WARLOCK" and IsAddOnLoaded("oUF_WarlockSpecBars")
+	if unit == "player" and showWarlockBar then
+		initClassIcons = function(unitFrame)
+			local data = oUF_Hank.classResources[playerClass]
+			local wb = CreateFrame("Frame", "oUFHank_WarlockSpecBar", unitFrame)
+			wb:SetPoint("TOPRIGHT", self, "BOTTOMRIGHT", 0, 0)
+			wb:SetSize(90, data.size[2])
+
+			wb.PostUpdate = function(icons, spec)
+				if spec == SPEC_WARLOCK_DEMONOLOGY then
+					icons[1]:SetOrientation("HORIZONTAL")
+					icons[1]:SetSize(data.size[1] * 4, data.size[2] / 4)
+					icons[1]:SetStatusBarTexture('Interface\\AddOns\\oUF_Hank_v3\\textures\\flat.blp')
+				else
+					icons[1]:SetOrientation("VERTICAL")
+					icons[1]:SetSize(data.size[1], data.size[2])
+					icons[1]:SetStatusBarTexture(data['active'][1])
+
+					for i=1,4 do
+						-- wtf, don't assume everyone wants automagic partitioning!
+						icons[i]:SetSize(data.size[1], data.size[2])
+					end
+				end
+			end
+			unitFrame.WarlockSpecBars = wb
+		end
+		initClassSingleIcon = function(unitFrame, i)
+			local data = oUF_Hank.classResources[playerClass]
+		end
+	end
+
+	-- Totems (requires oUF_TotemBar)
+	local showTotemBar = playerClass == "SHAMAN" and IsAddOnLoaded("oUF_TotemBar") and cfg.TotemBar
+	if unit == "player" and showTotemBar then
+		initClassIcons = function(unitFrame)
+			unitFrame.TotemBar = CreateFrame("Frame", "oUFHank_TotemBar", unitFrame)
+			unitFrame.TotemBar.Destroy = cfg.ClickToDestroy
+			unitFrame.TotemBar.delay = 0.3
+			unitFrame.TotemBar.colors = cfg.colors.totems
+		end
+		updateClassIconAnimation = function(self, val, ...)
+			if val == 0 then
+				-- Totem expired
+				self.glow:SetVertexColor(self:GetStatusBarColor())
+				self.glowend:SetVertexColor(self:GetStatusBarColor())
+				self.fill:Hide()
+				self.glowywheee:Show()
+			else
+				self.fill:SetSize(23, 4 + 12 * val / 1)
+				self.fill:SetTexCoord((1 + 23) / 128, ((23 * 2) + 1) / 128, 16 / 32 - 12 * val / 32, 20 / 32)
+				-- 2DO: This eats performance!!
+				self.fill:SetVertexColor(self:GetStatusBarColor())
+				if self.glowywheee:IsVisible() then
+					self.glowywheee:Hide()
+					self.glowend:Hide()
+				end
+				if not self.fill:IsVisible() then self.fill:Show() end
+			end
+		end
+		initClassSingleIcon = function(unitFrame, i, icon)
+			local data = oUF_Hank.classResources[playerClass]
+
+			-- DO NOT WANT! ;p
+			icon:SetStatusBarTexture(data['inactive'][1])
+			icon.backdrop:SetTexture(data['active'][1])
+			icon.bg = icon:CreateTexture(nil)
+
+			local fill = icon:CreateTexture(nil, "OVERLAY")
+			fill:SetSize(data.size[1], data.size[2])
+			fill:SetPoint("BOTTOM")
+			fill:SetTexture(data['active'][1])
+			if data['active'][2] then
+				fill:SetTexCoord(unpack(data['active'][2]))
+			else
+				fill:SetTexCoord(0, 1, 0, 1)
+			end
+			icon.fill = fill
+
+			-- Fill the totems
+			unitFrame.TotemBar[i]:SetScript("OnValueChanged", updateClassIconAnimation)
+		end
+		initClassIconAnimation = function(unitFrame, i, icon)
+			local data = oUF_Hank.classResources[playerClass]
+
+			local glowywheee = CreateFrame("Frame", nil, icon)
+			glowywheee:SetAllPoints()
+			glowywheee:SetAlpha(0)
+			glowywheee:Hide()
+			icon.glowywheee = glowywheee
+
+			local glow = glowywheee:CreateTexture(nil, "OVERLAY")
+			glow:SetAllPoints()
+			glow:SetPoint("CENTER")
+			glow:SetTexture(data['active'][1])
+			glow:SetTexCoord((2 + 2 * 23) / 128, ((23 * 3) + 2) / 128, 0, 20 / 32)
+			icon.glow = glow
+
+			local glowend = icon:CreateTexture(nil, "OVERLAY")
+			glowend:SetAllPoints()
+			glowend:SetTexture(data['active'][1])
+			glowend:SetTexCoord((2 + 2 * 23) / 128, ((23 * 3) + 2) / 128, 0, 20 / 32)
+			glowend:SetAlpha(0.5)
+			glowend:Hide()
+			icon.glowend = glowend
+
+			local anim = glowywheee:CreateAnimationGroup()
+			local alphaIn = anim:CreateAnimation("Alpha")
+			alphaIn:SetChange(0.5)
+			alphaIn:SetSmoothing("OUT")
+			alphaIn:SetDuration(1.5)
+			alphaIn:SetOrder(1)
+
+			glowywheee:SetScript("OnShow", function()
+				glowend:Hide()
+				anim:Play()
+			end)
+
+			anim:SetScript("OnFinished", function()
+				glowend:Show()
+				glowend:SetAlpha(0.5)
+			end)
+		end
+	end
+
+	-- Holy power
+	if unit == "player" and playerClass == "PALADIN" then
+		initClassIcons = function(unitFrame)
+			unitFrame.ClassIcons.animLastState = UnitPower("player", SPELL_POWER_HOLY_POWER)
+		end
+		initClassSingleIcon = function(unitFrame, i)
+			unitFrame.ClassIcons[i]:SetVertexColor(unpack(cfg.colors.power.HOLY_POWER))
+		end
+	end
+
+	-- StatusBarIcons: Totems / Soul Shards / Burning Embers / Demonic Fury
+	if unit == "player" and (showTotemBar or showWarlockBar) then
+		local data = oUF_Hank.classResources[playerClass]
+		local displayType = showTotemBar and "TotemBar" or "WarlockSpecBars"
+
+		if initClassIcons then
+			initClassIcons(self)
+		end
+
+		for i = 1, 4 do
+			local icon = CreateFrame("StatusBar", nil, self)
+			icon:SetSize(data.size[1], data.size[2])
+			icon:SetStatusBarTexture(data['active'][1])
+			icon:SetOrientation("VERTICAL")
+
+			local backdrop = icon:CreateTexture(nil, "BACKGROUND")
+			backdrop:SetAllPoints()
+			backdrop:SetTexture(data['inactive'][1])
+			if data['inactive'][2] then
+				backdrop:SetTexCoord(unpack(data['inactive'][2]))
+			else
+				backdrop:SetTexCoord(0, 1, 0, 1)
+			end
+			icon.backdrop = backdrop
+
+			if i == 1 then
+				icon:SetPoint(data.inverse and "TOPRIGHT" or "TOPLEFT", self, "BOTTOMRIGHT", data.offset or -90, 0)
+			else
+				icon:SetPoint(data.inverse and "RIGHT" or "LEFT", self[displayType][i - 1], data.inverse and "LEFT" or "RIGHT", data.spacing or 0,
+					0)
+			end
+
+			self[displayType][i] = icon
+
+			if initClassSingleIcon then
+				initClassSingleIcon(self, i, icon)
+			end
+			if initClassIconAnimation then
+				initClassIconAnimation(self, i, icon)
+			end
+		end
+	-- ClassIcons: Harmony Orbs / Shadow Orbs / Holy Power
+	elseif unit == "player" and (playerClass == "MONK" or playerClass == "PRIEST" or playerClass == "PALADIN" or playerClass == "WARLOCK") then
+		local data = oUF_Hank.classResources[playerClass]
+		local bg = {}
+		self.ClassIcons = {}
+		self.ClassIcons.animations = {}
+
+		if initClassIcons then
+			initClassIcons(self)
+		end
+
+		for i = 1, 5 do
+			bg[i] = CreateFrame("Frame", nil, self)
+			bg[i]:SetSize(data.size[1] or 28, data.size[2] or 28)
+
+			bg[i].tex = bg[i]:CreateTexture(nil, "ARTWORK")
+			bg[i].tex:SetTexture(data['inactive'][1])
+			if data['inactive'][2] then
+				bg[i].tex:SetTexCoord(unpack(data['inactive'][2]))
+			else
+				bg[i].tex:SetTexCoord(0, 1, 0, 1)
+			end
+			bg[i].tex:SetAllPoints(bg[i])
+
+			if i == 1 then
+				bg[i]:SetPoint("TOPRIGHT", self, "BOTTOMRIGHT", data.offset or -78, 0)
+			else
+				bg[i]:SetPoint(
+					data.inverse and "RIGHT" or "LEFT",
+					bg[i - 1],
+					data.inverse and "LEFT" or "RIGHT",
+					data.spacing or 0,
+					0
+				)
+			end
+
+			self.ClassIcons[i] = bg[i]:CreateTexture(nil, "OVERLAY")
+			self.ClassIcons[i]:SetTexture(data['active'][1])
+			if data['active'][2] then
+				self.ClassIcons[i]:SetTexCoord(unpack(data['active'][2]))
+			else
+				self.ClassIcons[i]:SetTexCoord(0, 1, 0, 1)
+			end
+			self.ClassIcons[i]:SetAllPoints(bg[i])
+
+			-- need access to the background in the PostUpdate function
+			self.ClassIcons[i].bg = bg[i].tex
+
+			if initClassSingleIcon then
+				initClassSingleIcon(self, i)
+			end
+			if initClassIconAnimation then
+				initClassIconAnimation(self, i)
+			end
+		end
+
+		self.ClassIcons.PostUpdate = function(_, current, max)
+			for i = 1, 5 do
+				if i > max then
+					self.ClassIcons[i]:Hide()
+					self.ClassIcons[i].bg:Hide()
+				else
+					self.ClassIcons[i].bg:Show()
+				end
+			end
+			if updateClassIconAnimation then
+				updateClassIconAnimation(self, current, max)
+			end
+		end
+	end
+
 	-- Eclipse display
-	if unit == "player" and select(2, UnitClass("player")) == "DRUID" then
+	if unit == "player" and playerClass == "DRUID" then
 		self.EclipseBar = CreateFrame("Frame", nil, self)
 		self.EclipseBar:SetSize(22, 22)
 		self.EclipseBar:SetPoint("TOPRIGHT", self, "BOTTOMRIGHT")
@@ -1187,25 +1282,25 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 		self.EclipseBar.bg:SetTexture("Interface\\AddOns\\oUF_Hank_v3\\textures\\eclipse.blp")
 		self.EclipseBar.bg:SetAllPoints()
 		self.EclipseBar.bg:SetTexCoord(0, 22 / 256, 0, 22 / 64)
-		
+
 		self.EclipseBar.fill = self.EclipseBar:CreateTexture(nil, "OVERLAY")
 		self.EclipseBar.fill:SetTexture("Interface\\AddOns\\oUF_Hank_v3\\textures\\eclipse.blp")
 		self.EclipseBar.fill:SetAllPoints()
-		
+
 		self.EclipseBar.direction = self.EclipseBar:CreateTexture(nil, "OVERLAY")
 		self.EclipseBar.direction:SetDrawLayer("OVERLAY", 1)
 		self.EclipseBar.direction:SetSize(11, 11)
 		self.EclipseBar.direction:SetTexture("Interface\\AddOns\\oUF_Hank_v3\\textures\\eclipse.blp")
 		self.EclipseBar.direction:SetPoint("BOTTOMRIGHT", self.EclipseBar, "BOTTOMRIGHT", 3, -3)
 		self.EclipseBar.direction:SetTexCoord(0, 22 / 256, 0, 22 / 64)
-		
+
 		self.EclipseBar.counter = self.EclipseBar:CreateFontString(nil, "OVERLAY")
 		self.EclipseBar.counter:SetFontObject("UFFontMedium")
 		self.EclipseBar.counter:SetPoint("RIGHT", self.EclipseBar, "LEFT", -5, 0)
 
 		-- Initialize direction on load
 		self.EclipseBar.direction:SetVertexColor(unpack(cfg.colors.power.ECLIPSE[GetEclipseDirection() == "sun" and "SOLAR" or "LUNAR"]))
-		
+
 		-- Play direction indicator animation on direction change (100% solar or lunar)
 		self.EclipseBar.PostDirectionChange = function()
 			self.EclipseBar.direction.frame = nil
@@ -1220,10 +1315,10 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 				end
 			end)
 		end
-		
+
 		-- Initialize phase
 		if UnitPower("player", 8) < 0 then self.EclipseBar.lastPhase = "sun" end
-		
+
 		-- Solar / lunar power updated
 		self.EclipseBar.PostUpdatePower = function()
 			-- Currently in solar phase
@@ -1244,17 +1339,17 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 				else
 					self.EclipseBar.bg:SetVertexColor(unpack(cfg.colors.power.ECLIPSE.SOLAR))
 				end
-				
+
 				-- Fill circle
-				self.EclipseBar.fill:SetTexCoord((10 + math.floor(self.EclipseBar.SolarBar:GetValue() / 10)) * 22 / 256, (11 + math.floor(self.EclipseBar.SolarBar:GetValue() / 10)) * 22 / 256, 22 / 64, 44 / 64)
-				
+				self.EclipseBar.fill:SetTexCoord((10 + floor(self.EclipseBar.SolarBar:GetValue() / 10)) * 22 / 256, (11 + floor(self.EclipseBar.SolarBar:GetValue() / 10)) * 22 / 256, 22 / 64, 44 / 64)
+
 				-- Update cast counter
 				if GetEclipseDirection() == "sun" then
-					self.EclipseBar.counter:SetText(math.ceil((100 + self.EclipseBar.SolarBar:GetValue()) / 20) .. " Starfires")
+					self.EclipseBar.counter:SetText(ceil((100 + self.EclipseBar.SolarBar:GetValue()) / 20) .. " Starfires")
 				else
-					self.EclipseBar.counter:SetText(math.ceil((100 - self.EclipseBar.SolarBar:GetValue()) / 13) .. " Wraths")
+					self.EclipseBar.counter:SetText(ceil((100 - self.EclipseBar.SolarBar:GetValue()) / 13) .. " Wraths")
 				end
-				
+
 				self.EclipseBar.lastPhase = "sun"
 			-- Currently in lunar phase
 			else
@@ -1274,110 +1369,22 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 				else
 					self.EclipseBar.bg:SetVertexColor(unpack(cfg.colors.power.ECLIPSE.LUNAR))
 				end
-				
+
 				-- Fill circle
-				self.EclipseBar.fill:SetTexCoord((11 + math.floor(self.EclipseBar.LunarBar:GetValue() / 10)) * 22 / 256, (10 + math.floor(self.EclipseBar.LunarBar:GetValue() / 10)) * 22 / 256, 22 / 64, 44 / 64)
-				
+				self.EclipseBar.fill:SetTexCoord((11 + floor(self.EclipseBar.LunarBar:GetValue() / 10)) * 22 / 256, (10 + floor(self.EclipseBar.LunarBar:GetValue() / 10)) * 22 / 256, 22 / 64, 44 / 64)
+
 				-- Update cast counter
 				if GetEclipseDirection() == "sun" then
-					self.EclipseBar.counter:SetText(math.ceil((100 - self.EclipseBar.LunarBar:GetValue()) / 20) .. " Starfires")
+					self.EclipseBar.counter:SetText(ceil((100 - self.EclipseBar.LunarBar:GetValue()) / 20) .. " Starfires")
 				else
-					self.EclipseBar.counter:SetText(math.ceil((100 + self.EclipseBar.LunarBar:GetValue()) / 13) .. " Wraths")
+					self.EclipseBar.counter:SetText(ceil((100 + self.EclipseBar.LunarBar:GetValue()) / 13) .. " Wraths")
 				end
-				
+
 				self.EclipseBar.lastPhase = "moon"
 			end
 		end
 	end
 
-	-- Totems (requires oUF_TotemBar)
-	if unit == "player" and select(2, UnitClass("player")) == "SHAMAN" and IsAddOnLoaded("oUF_TotemBar") and cfg.TotemBar then
-		self.TotemBar = {}
-		self.TotemBar.Destroy = cfg.ClickToDestroy
-		self.TotemBar.delay = 0.3
-		self.TotemBar.colors = cfg.colors.totems
-		for i = 1, 4 do
-			self.TotemBar[i] = CreateFrame("StatusBar", nil, self)
-			if i > 1 then self.TotemBar[i]:SetPoint("RIGHT", self.TotemBar[i - 1], "LEFT", -3 , 0) end
-			self.TotemBar[i]:SetStatusBarTexture("Interface\\AddOns\\oUF_Hank_v3\\textures\\blank.blp")
-			self.TotemBar[i]:SetSize(23, 20)
-			self.TotemBar[i]:SetMinMaxValues(0, 1)
-			-- DO NOT WANT! ;p
-			self.TotemBar[i].bg = self:CreateTexture(nil)
-			
-			local backdrop = self.TotemBar[i]:CreateTexture(nil, "ARTWORK")
-			backdrop:SetSize(23, 20)
-			backdrop:SetAllPoints()
-			backdrop:SetTexture("Interface\\AddOns\\oUF_Hank_v3\\textures\\totems.blp")
-			backdrop:SetTexCoord(0, 23 / 128, 0, 20 / 32)
-			
-			local fill = self.TotemBar[i]:CreateTexture(nil, "OVERLAY")
-			fill:SetSize(23, 20)
-			fill:SetPoint("BOTTOM")
-			fill:SetTexture("Interface\\AddOns\\oUF_Hank_v3\\textures\\totems.blp")
-			fill:SetTexCoord((1 + 23) / 128, ((23 * 2) + 1) / 128, 0, 20 / 32)
-			
-			-- Shine effect
-			local glowywheee = CreateFrame("Frame", nil, self.TotemBar[i])
-			glowywheee:SetAllPoints()
-			glowywheee:SetAlpha(0)
-			glowywheee:Hide()
-			
-			local glow = glowywheee:CreateTexture(nil, "OVERLAY")
-			glow:SetAllPoints()
-			glow:SetPoint("CENTER")
-			glow:SetTexture("Interface\\AddOns\\oUF_Hank_v3\\textures\\totems.blp")
-			glow:SetTexCoord((2 + 2 * 23) / 128, ((23 * 3) + 2) / 128, 0, 20 / 32)
-			
-			local glowend = self.TotemBar[i]:CreateTexture(nil, "OVERLAY")
-			glowend:SetAllPoints()
-			glowend:SetTexture("Interface\\AddOns\\oUF_Hank_v3\\textures\\totems.blp")
-			glowend:SetTexCoord((2 + 2 * 23) / 128, ((23 * 3) + 2) / 128, 0, 20 / 32)
-			glowend:SetAlpha(0.5)
-			glowend:Hide()
-			
-			local anim = glowywheee:CreateAnimationGroup()
-			local alphaIn = anim:CreateAnimation("Alpha")
-			alphaIn:SetChange(0.5)
-			alphaIn:SetSmoothing("OUT")
-			alphaIn:SetDuration(1.5)
-			alphaIn:SetOrder(1)
-
-			glowywheee:SetScript("OnShow", function()
-				glowend:Hide()
-				anim:Play()
-			end)
-			
-			anim:SetScript("OnFinished", function()
-				glowend:Show()
-				glowend:SetAlpha(0.5)
-			end)
-			
-			-- Fill the totems
-			self.TotemBar[i]:SetScript("OnValueChanged", function(self, val)
-				if val == 0 then
-					-- Totem expired
-					glow:SetVertexColor(self:GetStatusBarColor())
-					glowend:SetVertexColor(self:GetStatusBarColor())
-					fill:Hide()
-					glowywheee:Show()
-				else
-					fill:SetSize(23, 4 + 12 * val / 1)
-					fill:SetTexCoord((1 + 23) / 128, ((23 * 2) + 1) / 128, 16 / 32 - 12 * val / 32, 20 / 32)
-					-- 2DO: This eats performance!!
-					fill:SetVertexColor(self:GetStatusBarColor())
-					if glowywheee:IsVisible() then
-						glowywheee:Hide()
-						glowend:Hide()
-					end
-					if not fill:IsVisible() then fill:Show() end
-				end
-			end)
-		end
-		
-		self.TotemBar[1]:SetPoint("TOPRIGHT", self, "BOTTOMRIGHT")
-	end
-	
 	-- Support for oUF_SpellRange. The built-in oUF range check sucks :/
 	if (unit == "target" or unit == "focus") and cfg.RangeFade and IsAddOnLoaded("oUF_SpellRange") then
 		self.SpellRange = {
@@ -1385,7 +1392,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 			outsideAlpha = cfg.RangeFadeOpacity
 		}
 	end
-	
+
 	-- Castbar
 	if cfg.Castbar and (unit == "player" or unit == "target" or unit == "focus") then
 		-- StatusBar
@@ -1401,30 +1408,30 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 		else
 			cb:SetPoint("RIGHT", self, "LEFT", (cfg.CastbarIcon and (-cfg.CastbarSize[2] - 5) or 0) - 5 - cfg.CastbarMargin[1], cfg.CastbarMargin[2])
 		end
-		
+
 		-- BG
 		cb.Background = CreateFrame("Frame", nil, cb)
 		cb.Background:SetFrameStrata("BACKGROUND")
 		cb.Background:SetPoint("TOPLEFT", cb, "TOPLEFT", -5, 5)
 		cb.Background:SetPoint("BOTTOMRIGHT", cb, "BOTTOMRIGHT", 5, -5)
-		
+
 		local backdrop = {
 			bgFile = cfg.CastbarBackdropTexture,
 			edgeFile = cfg.CastbarBorderTexture,
 			tileSize = 16, edgeSize = 16, tile = true,
 			insets = {left = 4, right = 4, top = 4, bottom = 4}
 		}
-		
+
 		cb.Background:SetBackdrop(backdrop)
 		cb.Background:SetBackdropColor(0.22, 0.22, 0.19)
 		cb.Background:SetBackdropBorderColor(0, 0, 0, 1)
 		cb.Background:SetAlpha(0.8)
-		
+
 		-- Spark
 		cb.Spark = cb:CreateTexture(nil, "OVERLAY")
 		cb.Spark:SetSize(20, 35 * 2.2)
 		cb.Spark:SetBlendMode("ADD")
-		
+
 		-- Spell name
 		cb.Text = cb:CreateFontString(nil, "OVERLAY")
 		cb.Text:SetTextColor(unpack(cfg.colors.castbar.text))
@@ -1439,7 +1446,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 			cb.Text:SetPoint("LEFT", 3, 9)
 			cb.Text:SetPoint("RIGHT", -3, 9)
 		end
-		
+
 		if unit ~= "focus" then
 			-- Icon
 			if cfg.CastbarIcon then
@@ -1452,7 +1459,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 					cb.Icon:SetPoint("LEFT", cb, "RIGHT", 5, 0)
 				end
 			end
-			
+
 			-- Cast time
 			cb.Time = cb:CreateFontString(nil, "OVERLAY")
 			cb.Time:SetFont(unpack(cfg.CastBarBig))
@@ -1468,20 +1475,20 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 				cb.Time:SetText(("%.2f |cFFFF5033%s%.2f|r"):format(cb.castIsChanneled and t or cb.max - t, cb.castIsChanneled and "-" or "+", cb.delay))
 			end
 		end
-		
+
 		-- Latency
 		if unit == "player" then
 			cb.PreciseSafeZone = cb:CreateTexture(nil, "BACKGROUND")
 			cb.PreciseSafeZone:SetTexture(cfg.CastbarBackdropTexture)
 			cb.PreciseSafeZone:SetVertexColor(unpack(cfg.colors.castbar.latency))
-		
+
 			cb.Latency = cb:CreateFontString(nil, "OVERLAY")
 			cb.Latency:SetFont(unpack(cfg.CastBarSmall))
 			cb.Latency:SetTextColor(unpack(cfg.colors.castbar.latencyText))
 			cb.Latency:SetShadowOffset(0.8, -0.8)
 			cb.Latency:SetPoint("CENTER", cb.PreciseSafeZone)
 			cb.Latency:SetPoint("BOTTOM", cb.PreciseSafeZone)
-			
+
 			self:RegisterEvent("UNIT_SPELLCAST_SENT", function(_, _, caster)
 				if caster == "player" or caster == "vehicle" then
 					cb.castSent = GetTime()
@@ -1496,19 +1503,19 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 		cb.Dummy:SetBackdropColor(0.22, 0.22, 0.19)
 		cb.Dummy:SetBackdropBorderColor(0, 0, 0, 1)
 		cb.Dummy:SetAlpha(0.8)
-		
+
 		cb.Dummy.Fill = cb.Dummy:CreateTexture(nil, "OVERLAY")
 		cb.Dummy.Fill:SetTexture(cfg.CastbarTexture)
 		cb.Dummy.Fill:SetAllPoints(cb)
-		
+
 		if unit ~= "focus" and cfg.CastbarIcon then
 			cb.Dummy.Icon = cb.Dummy:CreateTexture(nil, "OVERLAY")
 			cb.Dummy.Icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
 			cb.Dummy.Icon:SetAllPoints(cb.Icon)
 		end
-		
+
 		cb.Dummy:Hide()
-		
+
 		cb.Dummy.anim = cb.Dummy:CreateAnimationGroup()
 		local alphaOut = cb.Dummy.anim:CreateAnimation("Alpha")
 		alphaOut:SetChange(-1)
@@ -1521,13 +1528,13 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 		end)
 
 		cb.Dummy.anim:SetScript("OnFinished", function() cb.Dummy:Hide() end)
-		
+
 		self:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED", function(_, _, unit, spell, rank)
 			if UnitIsUnit(unit, self.unit) and not cb.castIsChanneled then
 				oUF_Hank.PostCastSucceeded(cb, spell)
 			end
 		end)
-		
+
 		-- Shield dummy
 		cb.Shield = cb:CreateTexture(nil, "BACKGROUND")
 
@@ -1549,7 +1556,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 	elseif unit:find("boss") then
 		self:SetSize(250, 50)
 	end
-	
+
 end
 
 -- custom modifications hooks --------------------------
@@ -1560,7 +1567,7 @@ for modName, modHooks in pairs(oUF_Hank_hooks) do
 
 	local modErr = false
 	local numHooks = 0
-	
+
 	for k, v in pairs(modHooks) do
 		numHooks = numHooks + 1
 		local success, ret = pcall(hooksecurefunc, oUF_Hank, k, v)
@@ -1569,7 +1576,7 @@ for modName, modHooks in pairs(oUF_Hank_hooks) do
 			DEFAULT_CHAT_FRAME:AddMessage("oUF_Hank: Couldn't create hook for function " .. k .. "() in |cFFFF5033" .. modName .. "|r: \"" .. ret .. "\"", cfg.colors.text[1], cfg.colors.text[2], cfg.colors.text[3])
 		end
 	end
-	
+
 	if numHooks > 0 then
 		if not modErr then
 			modList = (modList or "") .. "|cFFFFFFFF" .. modName .. "|r, "
@@ -1577,7 +1584,7 @@ for modName, modHooks in pairs(oUF_Hank_hooks) do
 			modList = (modList or "") .. "|cFFFF5033" .. modName .. " (see errors)|r, "
 		end
 	end
-	
+
 end
 
 if modList then
