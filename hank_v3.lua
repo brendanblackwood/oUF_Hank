@@ -2,8 +2,8 @@ local oUF_Hank = {}
 local cfg = oUF_Hank_config
 
 -- GLOBALS: oUF_player, oUF_pet, oUF_target, oUF_focus
--- GLOBALS: _G, MIRRORTIMER_NUMTIMERS, SPELL_POWER_HOLY_POWER, MAX_TOTEMS, MAX_COMBO_POINTS, DebuffTypeColor
--- GLOBALS: ToggleDropDownMenu, UnitIsUnit, GetTime, AnimateTexCoords, GetEclipseDirection, MirrorTimerColors, GetTalentInfo, UnitHasVehicleUI, UnitHealth, UnitHealthMax, UnitPower, UnitIsDead, UnitIsGhost, UnitIsConnected, UnitAffectingCombat, GetLootMethod, UnitIsGroupLeader, UnitIsPVPFreeForAll, UnitIsPVP, UnitInRaid, IsResting, UnitAura, UnitCanAttack, UnitIsGroupAssistant, GetRuneCooldown, UnitClass, CancelUnitBuff, CreateFrame, IsAddOnLoaded, UnitFrame_OnEnter, UnitFrame_OnLeave
+-- GLOBALS: _G, MIRRORTIMER_NUMTIMERS, SPELL_POWER_HOLY_POWER, MAX_TOTEMS, MAX_COMBO_POINTS, DebuffTypeColor, SPEC_WARLOCK_DEMONOLOGY
+-- GLOBALS: ToggleDropDownMenu, UnitIsUnit, GetTime, AnimateTexCoords, GetEclipseDirection, MirrorTimerColors, GetSpecialization, UnitHasVehicleUI, UnitHealth, UnitHealthMax, UnitPower, UnitIsDead, UnitIsGhost, UnitIsConnected, UnitAffectingCombat, GetLootMethod, UnitIsGroupLeader, UnitIsPVPFreeForAll, UnitIsPVP, UnitInRaid, IsResting, UnitAura, UnitCanAttack, UnitIsGroupAssistant, GetRuneCooldown, UnitClass, CancelUnitBuff, CreateFrame, IsAddOnLoaded, UnitFrame_OnEnter, UnitFrame_OnLeave
 local unpack = unpack
 local pairs = pairs
 local ipairs = ipairs
@@ -169,14 +169,8 @@ end
 
 -- This is where the magic happens. Handle health update, display digit textures
 oUF_Hank.UpdateHealth = function(self)
-	local h, hMax
-
-	-- In vehicle
-	if self.unit == "player" and UnitHasVehicleUI("player") then
-		h, hMax = UnitHealth("pet"), UnitHealthMax("pet")
-	else
-		h, hMax = UnitHealth(self.unit), UnitHealthMax(self.unit)
-	end
+	-- self.unit == "vehicle" works fine
+	local h, hMax = UnitHealth(self.unit), UnitHealthMax(self.unit)
 
 	local status = (not UnitIsConnected(self.unit) or nil) and "Off" or UnitIsGhost(self.unit) and "G" or UnitIsDead(self.unit) and "X"
 
@@ -541,7 +535,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 	self.colors = cfg.colors
 
 	-- Update dispel table on talent update
-	if unit == "player" then self:RegisterEvent("PLAYER_TALENT_UPDATE", oUF_Hank.UpdateDispel) end
+	if unit == "player" then self:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED", oUF_Hank.UpdateDispel) end
 
 	-- HP%
 	local health = {}
@@ -551,7 +545,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 		self:RegisterEvent("UNIT_HEALTH", function(_, _, ...)
 			if unit == ... then
 				oUF_Hank.UpdateHealth(self)
-			elseif unit == "player" and UnitHasVehicleUI("player") and ... == "pet" then
+			elseif unit == "player" and UnitHasVehicleUI("player") and ... == "vehicle" then
 				oUF_Hank.UpdateHealth(self)
 			end
 		end)
@@ -559,7 +553,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 		self:RegisterEvent("UNIT_MAXHEALTH", function(_, _, ...)
 			if unit == ... then
 				oUF_Hank.UpdateHealth(self)
-			elseif unit == "player" and UnitHasVehicleUI("player") and ... == "pet" then
+			elseif unit == "player" and UnitHasVehicleUI("player") and ... == "vehicle" then
 				oUF_Hank.UpdateHealth(self)
 			end
 		end)
