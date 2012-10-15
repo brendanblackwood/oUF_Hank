@@ -153,17 +153,17 @@ end
 -- Update the dispel table after talent changes
 oUF_Hank.UpdateDispel = function()
 	canDispel = {
-		["DRUID"] = {["Poison"] = true, ["Curse"] = true, ["Magic"] = ({GetTalentInfo(3, 17, false, false, nil)})[5] == 1},
-		["MAGE"] = {["Curse"] = true},
-		["PALADIN"] = {["Poison"] = true, ["Disease"] = true, ["Magic"] = ({GetTalentInfo(1, 14, false, false, nil)})[5] == 1},
-		["PRIEST"] = {["Disease"] = true, ["Magic"] = true},
-		["SHAMAN"] = {["Curse"] = true, ["Magic"] = ({GetTalentInfo(3, 12, false, false, nil)})[5] == 1},
-		["WARLOCK"] = {["Magic"] = true},
-		["HUNTER"] = {},
-		["ROGUE"] = {},
-		["WARRIOR"] = {},
 		["DEATHKNIGHT"] = {},
-		["MONK"] = {["Poison"] = true, ["Disease"] = true}
+		["DRUID"] = {["Poison"] = true, ["Curse"] = true, ["Magic"] = (GetSpecialization() == 4)},
+		["HUNTER"] = {},
+		["MAGE"] = {["Curse"] = true},
+		["MONK"] = {["Poison"] = true, ["Disease"] = true, ["Magic"] = (GetSpecialization() == 2)},
+		["PALADIN"] = {["Poison"] = true, ["Disease"] = true, ["Magic"] = (GetSpecialization() == 1)},
+		["PRIEST"] = {["Disease"] = true, ["Magic"] = (GetSpecialization() ~= 3)},
+		["ROGUE"] = {},
+		["SHAMAN"] = {["Curse"] = true, ["Magic"] = (GetSpecialization() == 3)},
+		["WARLOCK"] = {["Magic"] = true},
+		["WARRIOR"] = {},
 	}
 end
 
