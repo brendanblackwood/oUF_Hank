@@ -1,8 +1,8 @@
-## Interface: 50500
+## Interface: 50100
 ## Title: oUF_Hank_v3
 ## Author: Hank
 ## Maintainer: Gwyd
-## Version: 5.0.5
+## Version: 5.1.0
 ## Dependencies: oUF
 ## OptionalDeps: oUF_SpellRange, oUF_Totembar, oUF_WarlockSpecBars
 ## Notes: oUF layout for |cFFFFA628hank|rui
