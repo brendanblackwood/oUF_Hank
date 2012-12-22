@@ -1339,9 +1339,10 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 
 				-- Update cast counter
 				if GetEclipseDirection() == "sun" then
-					self.EclipseBar.counter:SetText(ceil((100 + self.EclipseBar.SolarBar:GetValue()) / 20) .. " Starfires")
+					-- left lunar eclipse, working towards solar eclipse at double speed
+					self.EclipseBar.counter:SetText(ceil(100/40 + self.EclipseBar.SolarBar:GetValue()/40) .. " Starfires")
 				else
-					self.EclipseBar.counter:SetText(ceil((100 - self.EclipseBar.SolarBar:GetValue()) / 13) .. " Wraths")
+					self.EclipseBar.counter:SetText(ceil(100/30 - self.EclipseBar.SolarBar:GetValue()/15) .. " Wraths")
 				end
 
 				self.EclipseBar.lastPhase = "sun"
@@ -1369,9 +1370,10 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 
 				-- Update cast counter
 				if GetEclipseDirection() == "sun" then
-					self.EclipseBar.counter:SetText(ceil((100 - self.EclipseBar.LunarBar:GetValue()) / 20) .. " Starfires")
+					self.EclipseBar.counter:SetText(ceil(100/40 - self.EclipseBar.LunarBar:GetValue()/20) .. " Starfires")
 				else
-					self.EclipseBar.counter:SetText(ceil((100 + self.EclipseBar.LunarBar:GetValue()) / 13) .. " Wraths")
+					-- left solar eclipse, working towards lunar eclipse at double speed
+					self.EclipseBar.counter:SetText(ceil(100/30 + self.EclipseBar.LunarBar:GetValue()/30) .. " Wraths")
 				end
 
 				self.EclipseBar.lastPhase = "moon"
