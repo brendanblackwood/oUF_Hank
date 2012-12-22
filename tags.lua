@@ -61,7 +61,7 @@ oUF.Tags.Methods["statusName"] = function(unit)
 		color = class and oUF.colors.class[class]
 	else
 		if UnitIsEnemy(unit, "player") then
-			if UnitIsTapped(unit) and not UnitIsTappedByPlayer(unit) then
+			if UnitIsTapped(unit) and not UnitIsTappedByPlayer(unit) and not UnitIsTappedByAllThreatList(unit) then
 				color = oUF.colors.tapped
 			else
 				color = oUF.colors.reaction[1]
@@ -97,9 +97,9 @@ oUF.Tags.Methods["petName"] = function(unit)
 		return Abbreviate(UnitName("pet"))
 	else
 		return ""
-	end 
+	end
 end
-	
+
 oUF.Tags.Events["threatPerc"] = "UNIT_THREAT_SITUATION_UPDATE"
 oUF.Tags.Methods["threatPerc"] = function(unit)
 	local _, _, scaledPercent, _, _ = UnitDetailedThreatSituation("player", unit)
