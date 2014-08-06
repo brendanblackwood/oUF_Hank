@@ -1,4 +1,4 @@
-## Interface: 50200
+## Interface: 60000
 ## Title: oUF_Hank_v3
 ## Author: Hank
 ## Maintainer: Gwyd

@@ -801,7 +801,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 	end
 
 	-- Combo points
-	if unit == "target" and (playerClass == "ROGUE" or playerClass == "DRUID") then
+	if unit == "player" and (playerClass == "ROGUE" or playerClass == "DRUID") then
 		local bg = {}
 		local fill = {}
 		self.CPoints = {}
@@ -819,7 +819,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 			fill[i]:SetVertexColor(unpack(cfg.colors.power.ENERGY))
 			fill[i]:SetAllPoints(self.CPoints[i])
 		end
-		self.CPoints[1]:SetPoint("TOPLEFT", self, "BOTTOMLEFT")
+		self.CPoints[1]:SetPoint("TOP", self, "BOTTOM")
 		self.CPoints.unit = "player"
 	end
 
