@@ -101,17 +101,17 @@ colors = setmetatable({
 -- If you use fontain (http://www.wowace.com/addons/fontain/), please change "UFFonts" under "Single font overrides"
 
 -- Target name
-FontStyleBig = {"Interface\\AddOns\\oUF_Hank_v3\\fonts\\din1451e.ttf", 28, "THICKOUTLINE"},
+FontStyleBig = {"Interface\\AddOns\\oUF_Hank\\fonts\\din1451e.ttf", 28, "THICKOUTLINE"},
 -- Power, absolute health
-FontStyleMedium = {"Interface\\AddOns\\oUF_Hank_v3\\fonts\\din1451e.ttf", 16},
+FontStyleMedium = {"Interface\\AddOns\\oUF_Hank\\fonts\\din1451e.ttf", 16},
 -- ToT, TToT, pet
-FontStyleSmall = {"Interface\\AddOns\\oUF_Hank_v3\\fonts\\din1451e.ttf", 14},
+FontStyleSmall = {"Interface\\AddOns\\oUF_Hank\\fonts\\din1451e.ttf", 14},
 -- Castbar: Time text, focus spell name
-CastBarBig = {"Interface\\AddOns\\oUF_Hank_v3\\fonts\\tahoma.ttf", 15},
+CastBarBig = {"Interface\\AddOns\\oUF_Hank\\fonts\\tahoma.ttf", 15},
 -- Castbar: Spell name (player, target)
-CastBarMedium = {"Interface\\AddOns\\oUF_Hank_v3\\fonts\\tahoma.ttf", 9},
+CastBarMedium = {"Interface\\AddOns\\oUF_Hank\\fonts\\tahoma.ttf", 9},
 -- Castbar: Latency
-CastBarSmall = {"Interface\\AddOns\\oUF_Hank_v3\\fonts\\tahoma.ttf", 8},
+CastBarSmall = {"Interface\\AddOns\\oUF_Hank\\fonts\\tahoma.ttf", 8},
 
 ---------------------- Castbar ------------------------------
 -------------------------------------------------------------
@@ -126,11 +126,11 @@ CastbarFocusMargin = {0, 0},
 -- Show cast icon (true/false)
 CastbarIcon = true,
 -- Bar fill texture
-CastbarTexture = "Interface\\AddOns\\oUF_Hank_v3\\textures\\flat.blp",
+CastbarTexture = "Interface\\AddOns\\oUF_Hank\\textures\\flat.blp",
 -- Border texture
-CastbarBorderTexture = "Interface\\AddOns\\oUF_Hank_v3\\textures\\2px_glow.blp",
+CastbarBorderTexture = "Interface\\AddOns\\oUF_Hank\\textures\\2px_glow.blp",
 -- Background and latency texture
-CastbarBackdropTexture = "Interface\\AddOns\\oUF_Hank_v3\\textures\\flat.blp",
+CastbarBackdropTexture = "Interface\\AddOns\\oUF_Hank\\textures\\flat.blp",
 
 ----------------------- Status icons ------------------------
 -------------------------------------------------------------
@@ -154,7 +154,7 @@ DebuffSize = 22,
 -- Space between auras
 AuraSpacing = 8,
 -- Border texture. Set to false to disable. This layout also supports ButtonFacade.
-AuraBorder = "Interface\\AddOns\\oUF_Hank_v3\\textures\\borders\\dark_2.blp",
+AuraBorder = "Interface\\AddOns\\oUF_Hank\\textures\\borders\\dark_2.blp",
 -- Aura mouseover zoom (1.0 = 100%)
 AuraMagnification = 2.0,
 -- Color for highlighted auras (RGB value)

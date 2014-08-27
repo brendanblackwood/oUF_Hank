@@ -40,8 +40,8 @@ oUF_Hank.digitTexCoords = {
 
 oUF_Hank.classResources = {
 	['PALADIN'] = {
-		inactive = {'Interface\\AddOns\\oUF_Hank_v3\\textures\\HolyPower.blp', { 0, 18/64, 0, 18/32 }},
-		active = {'Interface\\AddOns\\oUF_Hank_v3\\textures\\HolyPower.blp', { 18/64, 36/64, 0, 18/32 }},
+		inactive = {'Interface\\AddOns\\oUF_Hank\\textures\\HolyPower.blp', { 0, 18/64, 0, 18/32 }},
+		active = {'Interface\\AddOns\\oUF_Hank\\textures\\HolyPower.blp', { 18/64, 36/64, 0, 18/32 }},
 		size = {18, 18},
 	},
 	['MONK'] = {
@@ -55,15 +55,15 @@ oUF_Hank.classResources = {
 		size = {28, 28},
 	},
 	['SHAMAN'] = {
-		inactive = {'Interface\\AddOns\\oUF_Hank_v3\\textures\\blank.blp', { 0, 23/128, 0, 20/32 }},
-		active = {'Interface\\AddOns\\oUF_Hank_v3\\textures\\totems.blp', { (1+23)/128, ((23*2)+1)/128, 0, 20/32 }},
+		inactive = {'Interface\\AddOns\\oUF_Hank\\textures\\blank.blp', { 0, 23/128, 0, 20/32 }},
+		active = {'Interface\\AddOns\\oUF_Hank\\textures\\totems.blp', { (1+23)/128, ((23*2)+1)/128, 0, 20/32 }},
 		size = {23, 20},
 		spacing = -3,
 		inverse = true,
 	},
 	['WARLOCK'] = {
-		inactive = {'Interface\\AddOns\\oUF_Hank_v3\\textures\\shard_bg.blp'},
-		active = {'Interface\\AddOns\\oUF_Hank_v3\\textures\\shard.blp'},
+		inactive = {'Interface\\AddOns\\oUF_Hank\\textures\\shard_bg.blp'},
+		active = {'Interface\\AddOns\\oUF_Hank\\textures\\shard.blp'},
 		size = {16, 16},
 		spacing = 5,
 	}
@@ -564,10 +564,10 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 
 		for i = unit:find("boss") and 1 or 4, 1, -1 do
 			health[i] = self:CreateTexture(nil, "ARTWORK")
-			health[i]:SetTexture("Interface\\AddOns\\oUF_Hank_v3\\textures\\digits.blp")
+			health[i]:SetTexture("Interface\\AddOns\\oUF_Hank\\textures\\digits.blp")
 			health[i]:Hide()
 			healthFill[i] = self:CreateTexture(nil, "OVERLAY")
-			healthFill[i]:SetTexture("Interface\\AddOns\\oUF_Hank_v3\\textures\\digits.blp")
+			healthFill[i]:SetTexture("Interface\\AddOns\\oUF_Hank\\textures\\digits.blp")
 			healthFill[i]:SetVertexColor(unpack(cfg.colors.text))
 			healthFill[i]:Hide()
 		end
@@ -667,7 +667,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 			if match(cfg.StatusIcons, icon[1]) then
 				self[icon[2]] = self:CreateTexture(nil, "OVERLAY")
 				self[icon[2]]:SetSize(24, 24)
-				self[icon[2]]:SetTexture("Interface\\AddOns\\oUF_Hank_v3\\textures\\statusicons.blp")
+				self[icon[2]]:SetTexture("Interface\\AddOns\\oUF_Hank\\textures\\statusicons.blp")
 				self[icon[2]]:SetTexCoord((i - 1) * 24 / 256, i * 24 / 256, 0, 24 / 32)
 				self[icon[2]].Override = oUF_Hank.UpdateStatus
 			end
@@ -681,13 +681,13 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 	if unit == "player" then
 		self.RaidIcon = self:CreateTexture(nil, "OVERLAY")
 		self.RaidIcon:SetSize(40, 40)
-		self.RaidIcon:SetTexture("Interface\\AddOns\\oUF_Hank_v3\\textures\\raidicons.blp")
+		self.RaidIcon:SetTexture("Interface\\AddOns\\oUF_Hank\\textures\\raidicons.blp")
 		self.RaidIcon:SetPoint("RIGHT", self.power, "LEFT", -15, 0)
 		self.RaidIcon:SetPoint("TOP", self, "TOP", 0, -5)
 	elseif unit == "target" or unit == "focus" then
 		self.RaidIcon = self:CreateTexture(nil, "OVERLAY")
 		self.RaidIcon:SetSize(40, 40)
-		self.RaidIcon:SetTexture("Interface\\AddOns\\oUF_Hank_v3\\textures\\raidicons.blp")
+		self.RaidIcon:SetTexture("Interface\\AddOns\\oUF_Hank\\textures\\raidicons.blp")
 		self.RaidIcon:SetPoint("LEFT", self.name, "RIGHT", 10, 0)
 		self.RaidIcon:SetPoint("TOP", self, "TOP", 0, -5)
 
@@ -702,7 +702,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 		self.RaidIcon = self:CreateTexture(nil)
 		self.RaidIcon:SetDrawLayer("OVERLAY", 1)
 		self.RaidIcon:SetSize(24, 24)
-		self.RaidIcon:SetTexture("Interface\\AddOns\\oUF_Hank_v3\\textures\\raidicons.blp")
+		self.RaidIcon:SetTexture("Interface\\AddOns\\oUF_Hank\\textures\\raidicons.blp")
 		self.RaidIcon:SetPoint("BOTTOMRIGHT", health[1], 5, -5)
 	end
 
@@ -726,7 +726,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 		powerDummy:SetAllPoints(power)
 		powerDummy:Hide()
 		local raidIconDummy = self:CreateTexture(nil, "OVERLAY")
-		raidIconDummy:SetTexture("Interface\\AddOns\\oUF_Hank_v3\\textures\\raidicons.blp")
+		raidIconDummy:SetTexture("Interface\\AddOns\\oUF_Hank\\textures\\raidicons.blp")
 		raidIconDummy:SetAllPoints(self.RaidIcon)
 		raidIconDummy:Hide()
 
@@ -810,11 +810,11 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 			self.CPoints[i]:SetSize(16, 16)
 			if i > 1 then self.CPoints[i]:SetPoint("LEFT", self.CPoints[i - 1], "RIGHT") end
 			bg[i] = self.CPoints[i]:CreateTexture(nil, "ARTWORK")
-			bg[i]:SetTexture("Interface\\AddOns\\oUF_Hank_v3\\textures\\combo.blp")
+			bg[i]:SetTexture("Interface\\AddOns\\oUF_Hank\\textures\\combo.blp")
 			bg[i]:SetTexCoord(0, 16 / 64, 0, 1)
 			bg[i]:SetAllPoints(self.CPoints[i])
 			fill[i] = self.CPoints[i]:CreateTexture(nil, "OVERLAY")
-			fill[i]:SetTexture("Interface\\AddOns\\oUF_Hank_v3\\textures\\combo.blp")
+			fill[i]:SetTexture("Interface\\AddOns\\oUF_Hank\\textures\\combo.blp")
 			fill[i]:SetTexCoord(0.5, 0.75, 0, 1)
 			fill[i]:SetVertexColor(unpack(cfg.colors.power.ENERGY))
 			fill[i]:SetAllPoints(self.CPoints[i])
@@ -887,7 +887,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 
 		for i = 1, 6 do
 			self.Runes[i] = CreateFrame("StatusBar", nil, self.Runes)
-			self.Runes[i]:SetStatusBarTexture("Interface\\AddOns\\oUF_Hank_v3\\textures\\blank.blp")
+			self.Runes[i]:SetStatusBarTexture("Interface\\AddOns\\oUF_Hank\\textures\\blank.blp")
 			self.Runes[i]:SetSize(16, 16)
 
 			if i == 1 then
@@ -899,14 +899,14 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 			local backdrop = self.Runes[i]:CreateTexture(nil, "ARTWORK")
 			backdrop:SetSize(16, 16)
 			backdrop:SetAllPoints()
-			backdrop:SetTexture("Interface\\AddOns\\oUF_Hank_v3\\textures\\combo.blp")
+			backdrop:SetTexture("Interface\\AddOns\\oUF_Hank\\textures\\combo.blp")
 			backdrop:SetTexCoord(0, 16 / 64, 0, 1)
 
 			-- This is actually the fill layer, but "bg" gets automatically vertex-colored by the runebar module. So let's make use of that!
 			self.Runes[i].bg = self.Runes[i]:CreateTexture(nil, "OVERLAY")
 			self.Runes[i].bg:SetSize(16, 16)
 			self.Runes[i].bg:SetPoint("BOTTOM")
-			self.Runes[i].bg:SetTexture("Interface\\AddOns\\oUF_Hank_v3\\textures\\combo.blp")
+			self.Runes[i].bg:SetTexture("Interface\\AddOns\\oUF_Hank\\textures\\combo.blp")
 			self.Runes[i].bg:SetTexCoord(0.5, 0.75, 0, 1)
 
 			-- Shine effect
@@ -1028,7 +1028,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 				if spec == SPEC_WARLOCK_DEMONOLOGY then
 					icons[1]:SetOrientation("HORIZONTAL")
 					icons[1]:SetSize(data.size[1] * 4, data.size[2] / 4)
-					icons[1]:SetStatusBarTexture('Interface\\AddOns\\oUF_Hank_v3\\textures\\flat.blp')
+					icons[1]:SetStatusBarTexture('Interface\\AddOns\\oUF_Hank\\textures\\flat.blp')
 				else
 					icons[1]:SetOrientation("VERTICAL")
 					icons[1]:SetSize(data.size[1], data.size[2])
@@ -1273,18 +1273,18 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 		self.EclipseBar.SolarBar = CreateFrame("StatusBar", nil, self.EclipseBar)
 
 		self.EclipseBar.bg = self.EclipseBar:CreateTexture(nil, "ARTWORK")
-		self.EclipseBar.bg:SetTexture("Interface\\AddOns\\oUF_Hank_v3\\textures\\eclipse.blp")
+		self.EclipseBar.bg:SetTexture("Interface\\AddOns\\oUF_Hank\\textures\\eclipse.blp")
 		self.EclipseBar.bg:SetAllPoints()
 		self.EclipseBar.bg:SetTexCoord(0, 22 / 256, 0, 22 / 64)
 
 		self.EclipseBar.fill = self.EclipseBar:CreateTexture(nil, "OVERLAY")
-		self.EclipseBar.fill:SetTexture("Interface\\AddOns\\oUF_Hank_v3\\textures\\eclipse.blp")
+		self.EclipseBar.fill:SetTexture("Interface\\AddOns\\oUF_Hank\\textures\\eclipse.blp")
 		self.EclipseBar.fill:SetAllPoints()
 
 		self.EclipseBar.direction = self.EclipseBar:CreateTexture(nil, "OVERLAY")
 		self.EclipseBar.direction:SetDrawLayer("OVERLAY", 1)
 		self.EclipseBar.direction:SetSize(11, 11)
-		self.EclipseBar.direction:SetTexture("Interface\\AddOns\\oUF_Hank_v3\\textures\\eclipse.blp")
+		self.EclipseBar.direction:SetTexture("Interface\\AddOns\\oUF_Hank\\textures\\eclipse.blp")
 		self.EclipseBar.direction:SetPoint("BOTTOMRIGHT", self.EclipseBar, "BOTTOMRIGHT", 3, -3)
 		self.EclipseBar.direction:SetTexCoord(0, 22 / 256, 0, 22 / 64)
 
@@ -1590,8 +1590,8 @@ end
 
 -- Frame creation --------------------------------
 
-oUF:RegisterStyle("Hankv3", oUF_Hank.sharedStyle)
-oUF:SetActiveStyle("Hankv3")
+oUF:RegisterStyle("Hank", oUF_Hank.sharedStyle)
+oUF:SetActiveStyle("Hank")
 oUF:Spawn("player", "oUF_player"):SetPoint("RIGHT", UIParent, "CENTER", -cfg.FrameMargin[1], -cfg.FrameMargin[2])
 oUF:Spawn("pet", "oUF_pet"):SetPoint("BOTTOMRIGHT", oUF_player, "TOPRIGHT")
 oUF:Spawn("target", "oUF_target"):SetPoint("LEFT", UIParent, "CENTER", cfg.FrameMargin[1], -cfg.FrameMargin[2])

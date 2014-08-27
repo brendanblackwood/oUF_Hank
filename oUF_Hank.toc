@@ -1,5 +1,5 @@
 ## Interface: 60000
-## Title: oUF_Hank_v3
+## Title: oUF_Hank
 ## Author: Hank
 ## Maintainer: Gwyd
 ## Version: 5.2.0
@@ -14,4 +14,4 @@ config.lua
 tags.lua
 custom_modifications.default.lua
 custom_modifications.lua
-hank_v3.lua
+hank.lua
