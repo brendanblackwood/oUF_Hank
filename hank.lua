@@ -1239,6 +1239,10 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 			-- need access to the background in the PostUpdate function
 			self.ClassIcons[i].bg = bg[i].tex
 
+			-- start hidden
+			self.ClassIcons[i]:Hide()
+			self.ClassIcons[i].bg:Hide()
+
 			if initClassSingleIcon then
 				initClassSingleIcon(self, i)
 			end
@@ -1247,9 +1251,13 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 			end
 		end
 
-		self.ClassIcons.PostUpdate = function(_, current, max)
+		self.ClassIcons.PostUpdate = function(_, current, max, changed, event)
+			local hide = false
+			if event == 'ClassPowerDisable' then
+				hide = true
+			end
 			for i = 1, 5 do
-				if i > max then
+				if hide or i > max then
 					self.ClassIcons[i]:Hide()
 					self.ClassIcons[i].bg:Hide()
 				else
