@@ -995,6 +995,9 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 			unitFrame.ClassIcons.animations[i]:SetScript("OnFinished", function() unitFrame.ClassIcons[i]:SetAlpha(1) end)
 		end
 		updateClassIconAnimation = function(unitFrame, current, max)
+			-- bail if we don't have ClassIcons to animate
+			if current == nil then return end
+			
 			unitFrame.ClassIcons.animLastState = unitFrame.ClassIcons.animLastState or 0
 			if current > 0 then
 				if unitFrame.ClassIcons.animLastState < current then
