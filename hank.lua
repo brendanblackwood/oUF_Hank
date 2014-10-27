@@ -824,13 +824,14 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 	end
 
 	-- Auras
-	if unit == "target" or unit == "focus" then
+	if unit == "target" or unit == "focus" or (cfg.PlayerBuffs and unit == "player") then
+		offset = unit == "player" and 40 or 0
 		-- Buffs
 		self.Buffs = CreateFrame("Frame", unit .. "_Buffs", self) -- ButtonFace needs a name
 		if self.CPoints then
-			self.Buffs:SetPoint("TOPLEFT", self.CPoints[1], "BOTTOMLEFT", 0, -5)
+			self.Buffs:SetPoint("TOPLEFT", self.CPoints[1], "BOTTOMLEFT", offset, -5)
 		else
-			self.Buffs:SetPoint("TOPLEFT", self, "BOTTOMLEFT", 0, -5)
+			self.Buffs:SetPoint("TOPLEFT", self, "BOTTOMLEFT", offset, -5)
 		end
 		self.Buffs:SetHeight(cfg.BuffSize)
 		self.Buffs:SetWidth(225)
@@ -843,8 +844,8 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 
 		-- Debuffs
 		self.Debuffs = CreateFrame("Frame", unit .. "_Debuffs", self)
-		self.Debuffs:SetPoint("LEFT", self, "LEFT", 0, 0)
-		self.Debuffs:SetPoint("TOP", self, "TOP", 0, 0) -- We will reanchor this in PreAuraSetPosition
+		self.Debuffs:SetPoint("LEFT", self, "LEFT", offset, 0)
+		self.Debuffs:SetPoint("TOP", self, "TOP", offset, 0) -- We will reanchor this in PreAuraSetPosition
 		self.Debuffs:SetHeight(cfg.DebuffSize)
 		self.Debuffs:SetWidth(225)
 		self.Debuffs.size = cfg.DebuffSize

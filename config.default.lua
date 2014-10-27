@@ -160,6 +160,8 @@ AuraMagnification = 2.0,
 -- Color for highlighted auras (RGB value)
 -- Set to {1, 1, 1} for original colors
 AuraStickyColor = {1, 0.65, 0.16},
+-- Show or hide auras on the player frame
+PlayerBuffs = false,
 
 ----------------------- Aura filters ------------------------
 -------------------------------------------------------------
@@ -227,6 +229,32 @@ AurasFOCUS = {
 	FilterMethod = {
 		Buffs = "WHITELIST",
 		Debuffs = "WHITELIST",
+	},
+
+	BlackList = {
+	},
+
+	WhiteList = {
+	},
+},
+
+-- Aura settings for player
+-- These will only work if PlayerBuffs = true
+AurasPLAYER = {
+	MaxBuffs = 4,
+	MaxDebuffs = 4,
+
+	StickyAuras = {
+		myBuffs = true,
+		myDebuffs = true,
+		petDebuffs = false,
+		curableDebuffs = true,
+		enemySelfBuffs = true,
+	},
+
+	FilterMethod = {
+		Buffs = "WHITELIST",
+		Debuffs = "BLACKLIST",
 	},
 
 	BlackList = {
