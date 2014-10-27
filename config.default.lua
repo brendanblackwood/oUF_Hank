@@ -160,7 +160,7 @@ AuraMagnification = 2.0,
 -- Color for highlighted auras (RGB value)
 -- Set to {1, 1, 1} for original colors
 AuraStickyColor = {1, 0.65, 0.16},
--- Show or hide auras on the player frame
+-- Show or hide auras on the player frame (experimental)
 PlayerBuffs = false,
 
 ----------------------- Aura filters ------------------------

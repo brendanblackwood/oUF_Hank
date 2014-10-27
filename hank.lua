@@ -823,58 +823,6 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 		self.CPoints.unit = "player"
 	end
 
-	-- Auras
-	if unit == "target" or unit == "focus" or (cfg.PlayerBuffs and unit == "player") then
-		offset = unit == "player" and 40 or 0
-		-- Buffs
-		self.Buffs = CreateFrame("Frame", unit .. "_Buffs", self) -- ButtonFace needs a name
-		if self.CPoints then
-			self.Buffs:SetPoint("TOPLEFT", self.CPoints[1], "BOTTOMLEFT", offset, -5)
-		else
-			self.Buffs:SetPoint("TOPLEFT", self, "BOTTOMLEFT", offset, -5)
-		end
-		self.Buffs:SetHeight(cfg.BuffSize)
-		self.Buffs:SetWidth(225)
-		self.Buffs.size = cfg.BuffSize
-		self.Buffs.spacing = cfg.AuraSpacing
-		self.Buffs.initialAnchor = "LEFT"
-		self.Buffs["growth-y"] = "DOWN"
-		self.Buffs.num = cfg["Auras" .. upper(unit)].MaxBuffs
-		self.Buffs.filter = "HELPFUL" -- Explicitly set the filter or the first customFilter call won't work
-
-		-- Debuffs
-		self.Debuffs = CreateFrame("Frame", unit .. "_Debuffs", self)
-		self.Debuffs:SetPoint("LEFT", self, "LEFT", offset, 0)
-		self.Debuffs:SetPoint("TOP", self, "TOP", offset, 0) -- We will reanchor this in PreAuraSetPosition
-		self.Debuffs:SetHeight(cfg.DebuffSize)
-		self.Debuffs:SetWidth(225)
-		self.Debuffs.size = cfg.DebuffSize
-		self.Debuffs.spacing = cfg.AuraSpacing
-		self.Debuffs.initialAnchor = "LEFT"
-		self.Debuffs["growth-y"] = "DOWN"
-		self.Debuffs.num = cfg["Auras" .. upper(unit)].MaxDebuffs
-		self.Debuffs.filter = "HARMFUL"
-
-		-- Buff magnification effect on mouseover
-		self.HighlightAura = CreateFrame("Frame", nil, self)
-		self.HighlightAura:SetFrameLevel(5) -- Above auras (level 3) and their cooldown overlay (4)
-		self.HighlightAura:SetBackdrop({bgFile = cfg.AuraBorder})
-		self.HighlightAura:SetBackdropColor(0, 0, 0, 1)
-		self.HighlightAura.icon = self.HighlightAura:CreateTexture(nil, "ARTWORK")
-		self.HighlightAura.icon:SetPoint("CENTER")
-		self.HighlightAura.border = self.HighlightAura:CreateTexture(nil, "OVERLAY")
-		self.HighlightAura.border:SetTexture(cfg.AuraBorder)
-		self.HighlightAura.border:SetPoint("CENTER")
-
-		self.Buffs.PostUpdateIcon = oUF_Hank.PostUpdateIcon
-		self.Debuffs.PostUpdateIcon = oUF_Hank.PostUpdateIcon
-		self.Buffs.PostCreateIcon = oUF_Hank.PostCreateIcon
-		self.Debuffs.PostCreateIcon = oUF_Hank.PostCreateIcon
-		self.Buffs.PreSetPosition = oUF_Hank.PreSetPosition
-		self.Buffs.CustomFilter = oUF_Hank.customFilter
-		self.Debuffs.CustomFilter = oUF_Hank.customFilter
-	end
-
 	-- Runes
 	if unit == "player" and playerClass == "DEATHKNIGHT" then
 		local runemap = { 1, 2, 5, 6, 3, 4 }
@@ -1391,6 +1339,70 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 				self.EclipseBar.lastPhase = "moon"
 			end
 		end
+	end
+
+	-- Auras
+	if unit == "target" or unit == "focus" or (cfg.PlayerBuffs and unit == "player") then
+		local offset = 0
+		local relative
+		-- Buffs
+		self.Buffs = CreateFrame("Frame", unit .. "_Buffs", self) -- ButtonFace needs a name
+		if unit == "player" then
+			if self.CPoints then
+				relative = self.CPoints[1]
+			elseif self.Runes then
+				relative = self.Runes
+			elseif self.ClassIcons then
+				relative = self.ClassIcons[1]
+			else
+				relative = self
+				offset = 40
+			end
+			self.Buffs:SetPoint("TOPLEFT", relative, "BOTTOMLEFT", offset, -5)
+		else
+			relative = self
+			self.Buffs:SetPoint("TOPLEFT", self, "BOTTOMLEFT", offset, -5)
+		end
+		self.Buffs:SetHeight(cfg.BuffSize)
+		self.Buffs:SetWidth(225)
+		self.Buffs.size = cfg.BuffSize
+		self.Buffs.spacing = cfg.AuraSpacing
+		self.Buffs.initialAnchor = "LEFT"
+		self.Buffs["growth-y"] = "DOWN"
+		self.Buffs.num = cfg["Auras" .. upper(unit)].MaxBuffs
+		self.Buffs.filter = "HELPFUL" -- Explicitly set the filter or the first customFilter call won't work
+
+		-- Debuffs
+		self.Debuffs = CreateFrame("Frame", unit .. "_Debuffs", self)
+		self.Debuffs:SetPoint("LEFT", relative, "LEFT", offset, 0)
+		self.Debuffs:SetPoint("TOP", relative, "TOP", offset, 0) -- We will reanchor this in PreAuraSetPosition
+		self.Debuffs:SetHeight(cfg.DebuffSize)
+		self.Debuffs:SetWidth(225)
+		self.Debuffs.size = cfg.DebuffSize
+		self.Debuffs.spacing = cfg.AuraSpacing
+		self.Debuffs.initialAnchor = "LEFT"
+		self.Debuffs["growth-y"] = "DOWN"
+		self.Debuffs.num = cfg["Auras" .. upper(unit)].MaxDebuffs
+		self.Debuffs.filter = "HARMFUL"
+
+		-- Buff magnification effect on mouseover
+		self.HighlightAura = CreateFrame("Frame", nil, self)
+		self.HighlightAura:SetFrameLevel(5) -- Above auras (level 3) and their cooldown overlay (4)
+		self.HighlightAura:SetBackdrop({bgFile = cfg.AuraBorder})
+		self.HighlightAura:SetBackdropColor(0, 0, 0, 1)
+		self.HighlightAura.icon = self.HighlightAura:CreateTexture(nil, "ARTWORK")
+		self.HighlightAura.icon:SetPoint("CENTER")
+		self.HighlightAura.border = self.HighlightAura:CreateTexture(nil, "OVERLAY")
+		self.HighlightAura.border:SetTexture(cfg.AuraBorder)
+		self.HighlightAura.border:SetPoint("CENTER")
+
+		self.Buffs.PostUpdateIcon = oUF_Hank.PostUpdateIcon
+		self.Debuffs.PostUpdateIcon = oUF_Hank.PostUpdateIcon
+		self.Buffs.PostCreateIcon = oUF_Hank.PostCreateIcon
+		self.Debuffs.PostCreateIcon = oUF_Hank.PostCreateIcon
+		self.Buffs.PreSetPosition = oUF_Hank.PreSetPosition
+		self.Buffs.CustomFilter = oUF_Hank.customFilter
+		self.Debuffs.CustomFilter = oUF_Hank.customFilter
 	end
 
 	-- Support for oUF_SpellRange. The built-in oUF range check sucks :/
