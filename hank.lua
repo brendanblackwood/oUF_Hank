@@ -1256,19 +1256,19 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 		self.EclipseBar.direction:SetVertexColor(unpack(cfg.colors.power.ECLIPSE[GetEclipseDirection() == "sun" and "SOLAR" or "LUNAR"]))
 
 		-- Play direction indicator animation on direction change (100% solar or lunar)
-		self.EclipseBar.PostDirectionChange = function()
-			self.EclipseBar.direction.frame = nil
-			self.EclipseBar:SetScript("OnUpdate", function(_ , elapsed)
-				AnimateTexCoords(self.EclipseBar.direction, 256, 64, 22, 22, 11, elapsed, 0.025)
-				if self.EclipseBar.direction.frame > 6 then
-					self.EclipseBar.direction:SetVertexColor(unpack(cfg.colors.power.ECLIPSE[GetEclipseDirection() == "sun" and "SOLAR" or "LUNAR"]))
-				end
-				if self.EclipseBar.direction.frame == 11 then
-					self.EclipseBar:SetScript("OnUpdate", nil)
-					self.EclipseBar.direction:SetTexCoord(0, 22 / 256, 0, 22 / 64)
-				end
-			end)
-		end
+		-- self.EclipseBar.PostDirectionChange = function()
+		-- 	self.EclipseBar.direction.frame = nil
+		-- 	self.EclipseBar:SetScript("OnUpdate", function(_ , elapsed)
+		-- 		AnimateTexCoords(self.EclipseBar.direction, 256, 64, 22, 22, 11, elapsed, 0.025)
+		-- 		if self.EclipseBar.direction.frame > 6 then
+		-- 			self.EclipseBar.direction:SetVertexColor(unpack(cfg.colors.power.ECLIPSE[GetEclipseDirection() == "sun" and "SOLAR" or "LUNAR"]))
+		-- 		end
+		-- 		if self.EclipseBar.direction.frame == 11 then
+		-- 			self.EclipseBar:SetScript("OnUpdate", nil)
+		-- 			self.EclipseBar.direction:SetTexCoord(0, 22 / 256, 0, 22 / 64)
+		-- 		end
+		-- 	end)
+		-- end
 
 		-- Initialize phase
 		if UnitPower("player", 8) < 0 then self.EclipseBar.lastPhase = "sun" end
