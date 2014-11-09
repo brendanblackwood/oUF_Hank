@@ -1513,7 +1513,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 				if caster == "player" or caster == "vehicle" then
 					cb.castSent = GetTime()
 				end
-			end)
+			end, true)
 		end
 
 		-- Animation dummy
