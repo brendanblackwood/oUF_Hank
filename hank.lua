@@ -1213,7 +1213,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 			if event == 'ClassPowerDisable' then
 				hide = true
 			end
-			for i = 1, 5 do
+			for i = 1, oUF_Hank.classResources[playerClass].max do
 				if hide or i > max then
 					self.ClassIcons[i]:Hide()
 					self.ClassIcons[i].bg:Hide()
