@@ -43,16 +43,19 @@ oUF_Hank.classResources = {
 		inactive = {'Interface\\AddOns\\oUF_Hank\\textures\\HolyPower.blp', { 0, 18/64, 0, 18/32 }},
 		active = {'Interface\\AddOns\\oUF_Hank\\textures\\HolyPower.blp', { 18/64, 36/64, 0, 18/32 }},
 		size = {18, 18},
+		max = 5,
 	},
 	['MONK'] = {
 		inactive = {'Interface\\PlayerFrame\\MonkNoPower'},
 		active = {'Interface\\PlayerFrame\\MonkLightPower'},
 		size = {20, 20},
+		max = 6,
 	},
 	['PRIEST'] = {
 		inactive = {'Interface\\PlayerFrame\\Priest-ShadowUI', { 76/256, 112/256, 57/128, 94/128 }},
 		active = {'Interface\\PlayerFrame\\Priest-ShadowUI', { 116/256, 152/256, 57/128, 94/128 }},
 		size = {28, 28},
+		max = 5,
 	},
 	['SHAMAN'] = {
 		inactive = {'Interface\\AddOns\\oUF_Hank\\textures\\blank.blp', { 0, 23/128, 0, 20/32 }},
@@ -60,12 +63,14 @@ oUF_Hank.classResources = {
 		size = {23, 20},
 		spacing = -3,
 		inverse = true,
+		max = 3,
 	},
 	['WARLOCK'] = {
 		inactive = {'Interface\\AddOns\\oUF_Hank\\textures\\shard_bg.blp'},
 		active = {'Interface\\AddOns\\oUF_Hank\\textures\\shard.blp'},
 		size = {16, 16},
 		spacing = 5,
+		max = 4,
 	}
 }
 
@@ -1121,7 +1126,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 			initClassIcons(self)
 		end
 
-		for i = 1, 4 do
+		for i = 1, oUF_Hank.classResources[playerClass].max do
 			local icon = CreateFrame("StatusBar", nil, self)
 			icon:SetSize(data.size[1], data.size[2])
 			icon:SetStatusBarTexture(data['active'][1])
@@ -1164,7 +1169,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 			initClassIcons(self)
 		end
 
-		for i = 1, 5 do
+		for i = 1, oUF_Hank.classResources[playerClass].max do
 			bg[i] = CreateFrame("Frame", nil, self)
 			bg[i]:SetSize(data.size[1] or 28, data.size[2] or 28)
 
@@ -1218,7 +1223,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 			if event == 'ClassPowerDisable' then
 				hide = true
 			end
-			for i = 1, 5 do
+			for i = 1, oUF_Hank.classResources[playerClass].max do
 				if hide or i > max then
 					self.ClassIcons[i]:Hide()
 					self.ClassIcons[i].bg:Hide()
@@ -1523,7 +1528,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 				if caster == "player" or caster == "vehicle" then
 					cb.castSent = GetTime()
 				end
-			end)
+			end, true)
 		end
 
 		-- Animation dummy

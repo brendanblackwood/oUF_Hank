@@ -2,7 +2,7 @@
 ## Title: oUF_Hank
 ## Author: Hank
 ## Maintainer: Gwyd
-## Version: 5.2.0
+## Version: 6.0.2
 ## Dependencies: oUF
 ## OptionalDeps: oUF_SpellRange, oUF_Totembar, oUF_WarlockSpecBars
 ## Notes: oUF layout for |cFFFFA628hank|rui
