@@ -733,33 +733,33 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 		local animXPFadeIn = xprepDummy:CreateAnimationGroup()
 		-- A short delay so the user needs to mouseover a short time for the xp/rep display to show up
 		local delayXP = animXPFadeIn:CreateAnimation("Alpha")
-		delayXP:SetChange(0)
+		-- delayXP:SetChange(0)
 		delayXP:SetDuration(cfg.DelayXP)
 		delayXP:SetOrder(1)
 		local alphaInXP = animXPFadeIn:CreateAnimation("Alpha")
-		alphaInXP:SetChange(1)
+		-- alphaInXP:SetChange(1)
 		alphaInXP:SetSmoothing("OUT")
 		alphaInXP:SetDuration(1.5)
 		alphaInXP:SetOrder(2)
 
 		local animPowerFadeOut = powerDummy:CreateAnimationGroup()
 		local delayPower = animPowerFadeOut:CreateAnimation("Alpha")
-		delayPower:SetChange(0)
+		-- delayPower:SetChange(0)
 		delayPower:SetDuration(cfg.DelayXP)
 		delayPower:SetOrder(1)
 		local alphaOutPower = animPowerFadeOut:CreateAnimation("Alpha")
-		alphaOutPower:SetChange(-1)
+		-- alphaOutPower:SetChange(-1)
 		alphaOutPower:SetSmoothing("OUT")
 		alphaOutPower:SetDuration(1.5)
 		alphaOutPower:SetOrder(2)
 
 		local animRaidIconFadeOut = raidIconDummy:CreateAnimationGroup()
 		local delayIcon = animRaidIconFadeOut:CreateAnimation("Alpha")
-		delayIcon:SetChange(0)
+		-- delayIcon:SetChange(0)
 		delayIcon:SetDuration(cfg.DelayXP * .75)
 		delayIcon:SetOrder(1)
 		local alphaOutIcon = animRaidIconFadeOut:CreateAnimation("Alpha")
-		alphaOutIcon:SetChange(-1)
+		-- alphaOutIcon:SetChange(-1)
 		alphaOutIcon:SetSmoothing("OUT")
 		alphaOutIcon:SetDuration(0.5)
 		alphaOutIcon:SetOrder(2)
@@ -872,7 +872,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 
 			local anim = shinywheee:CreateAnimationGroup()
 			local alphaIn = anim:CreateAnimation("Alpha")
-			alphaIn:SetChange(0.3)
+			-- alphaIn:SetChange(0.3)
 			alphaIn:SetDuration(0.4)
 			alphaIn:SetOrder(1)
 			local rotateIn = anim:CreateAnimation("Rotation")
@@ -885,7 +885,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 			scaleIn:SetDuration(0.4)
 			scaleIn:SetOrder(1)
 			local alphaOut = anim:CreateAnimation("Alpha")
-			alphaOut:SetChange(-0.5)
+			-- alphaOut:SetChange(-0.5)
 			alphaOut:SetDuration(0.4)
 			alphaOut:SetOrder(2)
 			local rotateOut = anim:CreateAnimation("Rotation")
@@ -936,7 +936,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 		initClassIconAnimation = function(unitFrame, i)
 			unitFrame.ClassIcons.animations[i] = unitFrame.ClassIcons[i]:CreateAnimationGroup()
 			local alphaIn = unitFrame.ClassIcons.animations[i]:CreateAnimation("Alpha")
-			alphaIn:SetChange(1)
+			-- alphaIn:SetChange(1)
 			alphaIn:SetSmoothing("OUT")
 			alphaIn:SetDuration(1)
 			alphaIn:SetOrder(1)
@@ -946,7 +946,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 		updateClassIconAnimation = function(unitFrame, current, max)
 			-- bail if we don't have ClassIcons to animate
 			if current == nil then return end
-			
+
 			unitFrame.ClassIcons.animLastState = unitFrame.ClassIcons.animLastState or 0
 			if current > 0 then
 				if unitFrame.ClassIcons.animLastState < current then
@@ -1075,7 +1075,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 
 			local anim = glowywheee:CreateAnimationGroup()
 			local alphaIn = anim:CreateAnimation("Alpha")
-			alphaIn:SetChange(0.5)
+			-- alphaIn:SetChange(0.5)
 			alphaIn:SetSmoothing("OUT")
 			alphaIn:SetDuration(1.5)
 			alphaIn:SetOrder(1)
@@ -1256,19 +1256,19 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 		self.EclipseBar.direction:SetVertexColor(unpack(cfg.colors.power.ECLIPSE[GetEclipseDirection() == "sun" and "SOLAR" or "LUNAR"]))
 
 		-- Play direction indicator animation on direction change (100% solar or lunar)
-		self.EclipseBar.PostDirectionChange = function()
-			self.EclipseBar.direction.frame = nil
-			self.EclipseBar:SetScript("OnUpdate", function(_ , elapsed)
-				AnimateTexCoords(self.EclipseBar.direction, 256, 64, 22, 22, 11, elapsed, 0.025)
-				if self.EclipseBar.direction.frame > 6 then
-					self.EclipseBar.direction:SetVertexColor(unpack(cfg.colors.power.ECLIPSE[GetEclipseDirection() == "sun" and "SOLAR" or "LUNAR"]))
-				end
-				if self.EclipseBar.direction.frame == 11 then
-					self.EclipseBar:SetScript("OnUpdate", nil)
-					self.EclipseBar.direction:SetTexCoord(0, 22 / 256, 0, 22 / 64)
-				end
-			end)
-		end
+		-- self.EclipseBar.PostDirectionChange = function()
+		-- 	self.EclipseBar.direction.frame = nil
+		-- 	self.EclipseBar:SetScript("OnUpdate", function(_ , elapsed)
+		-- 		AnimateTexCoords(self.EclipseBar.direction, 256, 64, 22, 22, 11, elapsed, 0.025)
+		-- 		if self.EclipseBar.direction.frame > 6 then
+		-- 			self.EclipseBar.direction:SetVertexColor(unpack(cfg.colors.power.ECLIPSE[GetEclipseDirection() == "sun" and "SOLAR" or "LUNAR"]))
+		-- 		end
+		-- 		if self.EclipseBar.direction.frame == 11 then
+		-- 			self.EclipseBar:SetScript("OnUpdate", nil)
+		-- 			self.EclipseBar.direction:SetTexCoord(0, 22 / 256, 0, 22 / 64)
+		-- 		end
+		-- 	end)
+		-- end
 
 		-- Initialize phase
 		if UnitPower("player", 8) < 0 then self.EclipseBar.lastPhase = "sun" end
@@ -1538,7 +1538,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 
 		cb.Dummy.anim = cb.Dummy:CreateAnimationGroup()
 		local alphaOut = cb.Dummy.anim:CreateAnimation("Alpha")
-		alphaOut:SetChange(-1)
+		-- alphaOut:SetChange(-1)
 		alphaOut:SetDuration(1)
 		alphaOut:SetOrder(0)
 

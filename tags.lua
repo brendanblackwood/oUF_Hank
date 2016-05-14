@@ -61,7 +61,7 @@ oUF.Tags.Methods["statusName"] = function(unit)
 		color = class and oUF.colors.class[class]
 	else
 		if UnitIsEnemy(unit, "player") then
-			if UnitIsTapped(unit) and not UnitIsTappedByPlayer(unit) and not UnitIsTappedByAllThreatList(unit) then
+			if UnitIsTapDenied(unit) then
 				color = oUF.colors.tapped
 			else
 				color = oUF.colors.reaction[1]
