@@ -840,7 +840,6 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 
 	-- Runes
 	if unit == "player" and playerClass == "DEATHKNIGHT" then
-		local runemap = { 1, 2, 5, 6, 3, 4 }
 		self.Runes = CreateFrame("Frame", nil, self)
 		self.Runes:SetPoint("TOPRIGHT", self, "BOTTOMRIGHT")
 		self.Runes:SetSize(96, 16)
@@ -849,7 +848,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 		self.Runes.height = 16
 		self.Runes.width = 16
 
-		for i = 1, 6 do
+		for i = 1, UnitPowerMax("player", SPELL_POWER_RUNES) do
 			self.Runes[i] = CreateFrame("StatusBar", nil, self.Runes)
 			self.Runes[i]:SetStatusBarTexture("Interface\\AddOns\\oUF_Hank\\textures\\blank.blp")
 			self.Runes[i]:SetSize(16, 16)
@@ -917,7 +916,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 			shinywheee:SetScript("OnShow", function() anim:Play() end)
 
 			self.Runes[i]:SetScript("OnValueChanged", function(self, val)
-				local start, duration, runeReady = GetRuneCooldown(runemap[i])
+				local start, duration, runeReady = GetRuneCooldown(i)
 				if runeReady then
 					self.last = 0
 					-- Rune ready: show all 16x16px, play animation
@@ -933,7 +932,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 			end)
 		end
 
-		self.Runes.PostUpdateRune = function(self, rune, rid, start, duration, runeReady)
+		self.Runes.PostUpdate = function(self, rune, rid, start, duration, runeReady)
 			if not runeReady then
 				local val = GetTime() - start
 				-- Dot distance from top & bottom of texture: 4px
@@ -952,6 +951,8 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 			unitFrame.ClassIcons.animations[i] = unitFrame.ClassIcons[i]:CreateAnimationGroup()
 			local alphaIn = unitFrame.ClassIcons.animations[i]:CreateAnimation("Alpha")
 			-- alphaIn:SetChange(1)
+			alphaIn:SetFromAlpha(0)
+			alphaIn:SetToAlpha(1)
 			alphaIn:SetSmoothing("OUT")
 			alphaIn:SetDuration(1)
 			alphaIn:SetOrder(1)
@@ -1553,7 +1554,8 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 
 		cb.Dummy.anim = cb.Dummy:CreateAnimationGroup()
 		local alphaOut = cb.Dummy.anim:CreateAnimation("Alpha")
-		-- alphaOut:SetChange(-1)
+		alphaOut:SetFromAlpha(1)
+		alphaOut:SetToAlpha(0)
 		alphaOut:SetDuration(1)
 		alphaOut:SetOrder(0)
 
