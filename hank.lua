@@ -1219,7 +1219,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 			end
 		end
 
-		self.ClassIcons.PostUpdate = function(_, current, max, changed, event)
+		self.ClassIcons.PostUpdate = function(_, current, max, changed, powerType, event)
 			local hide = false
 			if event == 'ClassPowerDisable' then
 				hide = true
