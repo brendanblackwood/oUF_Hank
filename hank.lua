@@ -1201,121 +1201,21 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 		end
 	end
 
-	-- Eclipse display
-	if unit == "player" and playerClass == "DRUID" then
-		self.EclipseBar = CreateFrame("Frame", nil, self)
-		self.EclipseBar:SetSize(22, 22)
-		self.EclipseBar:SetPoint("TOPRIGHT", self, "BOTTOMRIGHT")
+	if unit == "player" and (playerClass == "DRUID" or playerClass == 'PRIEST' or playerClass == "SHAMAN") then
+		local additionalPower = self:CreateFontString(nil, "OVERLAY")
+		additionalPower:SetFontObject("UFFontMedium")
+		additionalPower:SetPoint("TOPRIGHT", power, "TOPRIGHT", 0, 15)
+		self:Tag(additionalPower, "[apDetailed]")
 
-		-- Dummies
-		self.EclipseBar.LunarBar = CreateFrame("StatusBar", nil, self.EclipseBar)
-		self.EclipseBar.SolarBar = CreateFrame("StatusBar", nil, self.EclipseBar)
+		-- Register it with oUF
+		local dummyBar = CreateFrame("StatusBar", nil, self)
+		self.DruidMana = dummyBar
 
-		self.EclipseBar.bg = self.EclipseBar:CreateTexture(nil, "ARTWORK")
-		self.EclipseBar.bg:SetTexture("Interface\\AddOns\\oUF_Hank\\textures\\eclipse.blp")
-		self.EclipseBar.bg:SetAllPoints()
-		self.EclipseBar.bg:SetTexCoord(0, 22 / 256, 0, 22 / 64)
-
-		self.EclipseBar.fill = self.EclipseBar:CreateTexture(nil, "OVERLAY")
-		self.EclipseBar.fill:SetTexture("Interface\\AddOns\\oUF_Hank\\textures\\eclipse.blp")
-		self.EclipseBar.fill:SetAllPoints()
-
-		self.EclipseBar.direction = self.EclipseBar:CreateTexture(nil, "OVERLAY")
-		self.EclipseBar.direction:SetDrawLayer("OVERLAY", 1)
-		self.EclipseBar.direction:SetSize(11, 11)
-		self.EclipseBar.direction:SetTexture("Interface\\AddOns\\oUF_Hank\\textures\\eclipse.blp")
-		self.EclipseBar.direction:SetPoint("BOTTOMRIGHT", self.EclipseBar, "BOTTOMRIGHT", 3, -3)
-		self.EclipseBar.direction:SetTexCoord(0, 22 / 256, 0, 22 / 64)
-
-		self.EclipseBar.counter = self.EclipseBar:CreateFontString(nil, "OVERLAY")
-		self.EclipseBar.counter:SetFontObject("UFFontMedium")
-		self.EclipseBar.counter:SetPoint("RIGHT", self.EclipseBar, "LEFT", -5, 0)
-
-		-- Initialize direction on load
-		self.EclipseBar.direction:SetVertexColor(unpack(cfg.colors.power.ECLIPSE[GetEclipseDirection() == "sun" and "SOLAR" or "LUNAR"]))
-
-		-- Play direction indicator animation on direction change (100% solar or lunar)
-		-- self.EclipseBar.PostDirectionChange = function()
-		-- 	self.EclipseBar.direction.frame = nil
-		-- 	self.EclipseBar:SetScript("OnUpdate", function(_ , elapsed)
-		-- 		AnimateTexCoords(self.EclipseBar.direction, 256, 64, 22, 22, 11, elapsed, 0.025)
-		-- 		if self.EclipseBar.direction.frame > 6 then
-		-- 			self.EclipseBar.direction:SetVertexColor(unpack(cfg.colors.power.ECLIPSE[GetEclipseDirection() == "sun" and "SOLAR" or "LUNAR"]))
-		-- 		end
-		-- 		if self.EclipseBar.direction.frame == 11 then
-		-- 			self.EclipseBar:SetScript("OnUpdate", nil)
-		-- 			self.EclipseBar.direction:SetTexCoord(0, 22 / 256, 0, 22 / 64)
-		-- 		end
-		-- 	end)
-		-- end
-
-		-- Initialize phase
-		if UnitPower("player", 8) < 0 then self.EclipseBar.lastPhase = "sun" end
-
-		-- Solar / lunar power updated
-		self.EclipseBar.PostUpdatePower = function()
-			-- Currently in solar phase
-			if self.EclipseBar.SolarBar:GetValue() < self.EclipseBar.LunarBar:GetValue() then
-				-- Solar phase has just been entered => play animation
-				if self.EclipseBar.lastPhase == "moon" then
-					self.EclipseBar.bg.frame = nil
-					self.EclipseBar:SetScript("OnUpdate", function(_ , elapsed)
-						-- Blizzard global function (UIParent.lua)
-						AnimateTexCoords(self.EclipseBar.bg, 256, 64, 22, 22, 11, elapsed, 0.025)
-						if self.EclipseBar.bg.frame > 6 then self.EclipseBar.bg:SetVertexColor(unpack(cfg.colors.power.ECLIPSE.SOLAR)) end
-						-- Stop animation on last frame
-						if self.EclipseBar.bg.frame == 11 then
-							self.EclipseBar:SetScript("OnUpdate", nil)
-							self.EclipseBar.bg:SetTexCoord(0, 22 / 256, 0, 22 / 64)
-						end
-					end)
-				else
-					self.EclipseBar.bg:SetVertexColor(unpack(cfg.colors.power.ECLIPSE.SOLAR))
-				end
-
-				-- Fill circle
-				self.EclipseBar.fill:SetTexCoord((10 + floor(self.EclipseBar.SolarBar:GetValue() / 10)) * 22 / 256, (11 + floor(self.EclipseBar.SolarBar:GetValue() / 10)) * 22 / 256, 22 / 64, 44 / 64)
-
-				-- Update cast counter
-				if GetEclipseDirection() == "sun" then
-					-- left lunar eclipse, working towards solar eclipse at double speed
-					self.EclipseBar.counter:SetText(ceil(100/40 + self.EclipseBar.SolarBar:GetValue()/40) .. " Starfires")
-				else
-					self.EclipseBar.counter:SetText(ceil(100/30 - self.EclipseBar.SolarBar:GetValue()/15) .. " Wraths")
-				end
-
-				self.EclipseBar.lastPhase = "sun"
-			-- Currently in lunar phase
+		self.DruidMana.PostUpdate = function(_, unit, current, max)
+			if select(2, UnitPowerType(unit)) ~= ADDITIONAL_POWER_BAR_NAME then
+				additionalPower:Show()
 			else
-				-- Lunar phase has just been entered => play animation
-				if self.EclipseBar.lastPhase == "sun" then
-					self.EclipseBar.bg.frame = nil
-					self.EclipseBar:SetScript("OnUpdate", function(_ , elapsed)
-						-- Blizzard global function (UIParent.lua)
-						AnimateTexCoords(self.EclipseBar.bg, 256, 64, 22, 22, 11, elapsed, 0.025)
-						if self.EclipseBar.bg.frame > 6 then self.EclipseBar.bg:SetVertexColor(unpack(cfg.colors.power.ECLIPSE.LUNAR)) end
-						-- Stop animation on last frame
-						if self.EclipseBar.bg.frame == 11 then
-							self.EclipseBar:SetScript("OnUpdate", nil)
-							self.EclipseBar.bg:SetTexCoord(0, 22 / 256, 0, 22 / 64)
-						end
-					end)
-				else
-					self.EclipseBar.bg:SetVertexColor(unpack(cfg.colors.power.ECLIPSE.LUNAR))
-				end
-
-				-- Fill circle
-				self.EclipseBar.fill:SetTexCoord((11 + floor(self.EclipseBar.LunarBar:GetValue() / 10)) * 22 / 256, (10 + floor(self.EclipseBar.LunarBar:GetValue() / 10)) * 22 / 256, 22 / 64, 44 / 64)
-
-				-- Update cast counter
-				if GetEclipseDirection() == "sun" then
-					self.EclipseBar.counter:SetText(ceil(100/40 - self.EclipseBar.LunarBar:GetValue()/20) .. " Starfires")
-				else
-					-- left solar eclipse, working towards lunar eclipse at double speed
-					self.EclipseBar.counter:SetText(ceil(100/30 + self.EclipseBar.LunarBar:GetValue()/30) .. " Wraths")
-				end
-
-				self.EclipseBar.lastPhase = "moon"
+				additionalPower:Hide()
 			end
 		end
 	end
