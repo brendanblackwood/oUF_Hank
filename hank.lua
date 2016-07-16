@@ -51,12 +51,6 @@ oUF_Hank.classResources = {
 		size = {20, 20},
 		max = 6,
 	},
-	['PRIEST'] = {
-		inactive = {'Interface\\PlayerFrame\\Priest-ShadowUI', { 76/256, 112/256, 57/128, 94/128 }},
-		active = {'Interface\\PlayerFrame\\Priest-ShadowUI', { 116/256, 152/256, 57/128, 94/128 }},
-		size = {28, 28},
-		max = 5,
-	},
 	['SHAMAN'] = {
 		inactive = {'Interface\\AddOns\\oUF_Hank\\textures\\blank.blp', { 0, 23/128, 0, 20/32 }},
 		active = {'Interface\\AddOns\\oUF_Hank\\textures\\totems.blp', { (1+23)/128, ((23*2)+1)/128, 0, 20/32 }},
@@ -70,7 +64,7 @@ oUF_Hank.classResources = {
 		active = {'Interface\\AddOns\\oUF_Hank\\textures\\shard.blp'},
 		size = {16, 16},
 		spacing = 5,
-		max = 4,
+		max = 6,
 	}
 }
 
@@ -158,6 +152,7 @@ end
 -- Update the dispel table after talent changes
 oUF_Hank.UpdateDispel = function()
 	canDispel = {
+		["DEMONHUNTER"] = {},
 		["DEATHKNIGHT"] = {},
 		["DRUID"] = {["Poison"] = true, ["Curse"] = true, ["Magic"] = (GetSpecialization() == 4)},
 		["HUNTER"] = {},
@@ -946,7 +941,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 	local initClassIconAnimation, updateClassIconAnimation
 	local initClassIcons, initClassSingleIcon
 	-- animation: fade in
-	if unit == "player" and (playerClass == "MONK" or playerClass == "PALADIN") then
+	if unit == "player" and (playerClass == "MONK" or playerClass == "PALADIN" or playerClass == "WARLOCK") then
 		initClassIconAnimation = function(unitFrame, i)
 			unitFrame.ClassIcons.animations[i] = unitFrame.ClassIcons[i]:CreateAnimationGroup()
 			local alphaIn = unitFrame.ClassIcons.animations[i]:CreateAnimation("Alpha")
@@ -980,38 +975,6 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 				end
 			end
 			unitFrame.ClassIcons.animLastState = current
-		end
-	end
-
-	-- Warlock secondary resource (requires oUF_WarlockSpecBars)
-	local showWarlockBar = playerClass == "WARLOCK" and IsAddOnLoaded("oUF_WarlockSpecBars")
-	if unit == "player" and showWarlockBar then
-		initClassIcons = function(unitFrame)
-			local data = oUF_Hank.classResources[playerClass]
-			local wb = CreateFrame("Frame", "oUFHank_WarlockSpecBar", unitFrame)
-			wb:SetPoint("TOPRIGHT", self, "BOTTOMRIGHT", 0, 0)
-			wb:SetSize(90, data.size[2])
-
-			wb.PostUpdate = function(icons, spec)
-				if spec == SPEC_WARLOCK_DEMONOLOGY then
-					icons[1]:SetOrientation("HORIZONTAL")
-					icons[1]:SetSize(data.size[1] * 4, data.size[2] / 4)
-					icons[1]:SetStatusBarTexture('Interface\\AddOns\\oUF_Hank\\textures\\flat.blp')
-				else
-					icons[1]:SetOrientation("VERTICAL")
-					icons[1]:SetSize(data.size[1], data.size[2])
-					icons[1]:SetStatusBarTexture(data['active'][1])
-
-					for i=1,4 do
-						-- wtf, don't assume everyone wants automagic partitioning!
-						icons[i]:SetSize(data.size[1], data.size[2])
-					end
-				end
-			end
-			unitFrame.WarlockSpecBars = wb
-		end
-		initClassSingleIcon = function(unitFrame, i)
-			local data = oUF_Hank.classResources[playerClass]
 		end
 	end
 
@@ -1159,8 +1122,8 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 				initClassIconAnimation(self, i, icon)
 			end
 		end
-	-- ClassIcons: Harmony Orbs / Shadow Orbs / Holy Power
-	elseif unit == "player" and (playerClass == "MONK" or playerClass == "PRIEST" or playerClass == "PALADIN" or playerClass == "WARLOCK") then
+	-- ClassIcons: Harmony Orbs / Holy Power / Warlock Shards
+	elseif unit == "player" and (playerClass == "MONK" or playerClass == "PALADIN" or playerClass == "WARLOCK") then
 		local data = oUF_Hank.classResources[playerClass]
 		local bg = {}
 		self.ClassIcons = {}
