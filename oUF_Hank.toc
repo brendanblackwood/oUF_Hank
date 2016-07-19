@@ -1,10 +1,10 @@
-## Interface: 60000
+## Interface: 70000
 ## Title: oUF_Hank
 ## Author: Hank
 ## Maintainer: Gwyd
-## Version: 6.0.2
+## Version: 7.0.0
 ## Dependencies: oUF
-## OptionalDeps: oUF_SpellRange, oUF_Totembar, oUF_WarlockSpecBars
+## OptionalDeps: oUF_SpellRange, oUF_Totembar
 ## Notes: oUF layout for |cFFFFA628hank|rui
 ## X-RelSite-WoWI: 21474
 ## X-WoWIPortal: hankthetank

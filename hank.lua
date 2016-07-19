@@ -3,7 +3,7 @@ local cfg = oUF_Hank_config
 
 -- GLOBALS: oUF_player, oUF_pet, oUF_target, oUF_focus
 -- GLOBALS: _G, MIRRORTIMER_NUMTIMERS, SPELL_POWER_HOLY_POWER, MAX_TOTEMS, MAX_COMBO_POINTS, DebuffTypeColor, SPEC_WARLOCK_DEMONOLOGY
--- GLOBALS: ToggleDropDownMenu, UnitIsUnit, GetTime, AnimateTexCoords, GetEclipseDirection, MirrorTimerColors, GetSpecialization, UnitHasVehicleUI, UnitHealth, UnitHealthMax, UnitPower, UnitIsDead, UnitIsGhost, UnitIsConnected, UnitAffectingCombat, GetLootMethod, UnitIsGroupLeader, UnitIsPVPFreeForAll, UnitIsPVP, UnitInRaid, IsResting, UnitAura, UnitCanAttack, UnitIsGroupAssistant, GetRuneCooldown, UnitClass, CancelUnitBuff, CreateFrame, IsAddOnLoaded, UnitFrame_OnEnter, UnitFrame_OnLeave
+-- GLOBALS: ToggleDropDownMenu, UnitIsUnit, GetTime, AnimateTexCoords, MirrorTimerColors, GetSpecialization, UnitHasVehicleUI, UnitHealth, UnitHealthMax, UnitPower, UnitIsDead, UnitIsGhost, UnitIsConnected, UnitAffectingCombat, GetLootMethod, UnitIsGroupLeader, UnitIsPVPFreeForAll, UnitIsPVP, UnitInRaid, IsResting, UnitAura, UnitCanAttack, UnitIsGroupAssistant, GetRuneCooldown, UnitClass, CancelUnitBuff, CreateFrame, IsAddOnLoaded, UnitFrame_OnEnter, UnitFrame_OnLeave
 local unpack = unpack
 local pairs = pairs
 local ipairs = ipairs
@@ -51,12 +51,6 @@ oUF_Hank.classResources = {
 		size = {20, 20},
 		max = 6,
 	},
-	['PRIEST'] = {
-		inactive = {'Interface\\PlayerFrame\\Priest-ShadowUI', { 76/256, 112/256, 57/128, 94/128 }},
-		active = {'Interface\\PlayerFrame\\Priest-ShadowUI', { 116/256, 152/256, 57/128, 94/128 }},
-		size = {28, 28},
-		max = 5,
-	},
 	['SHAMAN'] = {
 		inactive = {'Interface\\AddOns\\oUF_Hank\\textures\\blank.blp', { 0, 23/128, 0, 20/32 }},
 		active = {'Interface\\AddOns\\oUF_Hank\\textures\\totems.blp', { (1+23)/128, ((23*2)+1)/128, 0, 20/32 }},
@@ -70,7 +64,7 @@ oUF_Hank.classResources = {
 		active = {'Interface\\AddOns\\oUF_Hank\\textures\\shard.blp'},
 		size = {16, 16},
 		spacing = 5,
-		max = 4,
+		max = 6,
 	}
 }
 
@@ -158,6 +152,7 @@ end
 -- Update the dispel table after talent changes
 oUF_Hank.UpdateDispel = function()
 	canDispel = {
+		["DEMONHUNTER"] = {},
 		["DEATHKNIGHT"] = {},
 		["DRUID"] = {["Poison"] = true, ["Curse"] = true, ["Magic"] = (GetSpecialization() == 4)},
 		["HUNTER"] = {},
@@ -249,8 +244,29 @@ end
 
 -- Manual status icons update
 oUF_Hank.UpdateStatus = function(self)
+	local referenceElement
+	-- TODO find a better way to do this
+	hasAdditionalPower = {
+		["DEMONHUNTER"] = false,
+		["DEATHKNIGHT"] = false,
+		["DRUID"] = (GetSpecialization() ~= 4),
+		["HUNTER"] = false,
+		["MAGE"] = false,
+		["MONK"] = false,
+		["PALADIN"] = false,
+		["PRIEST"] = (GetSpecialization() == 3),
+		["ROGUE"] = false,
+		["SHAMAN"] = (GetSpecialization() == 1 or GetSpecialization() == 2),
+		["WARLOCK"] = false,
+		["WARRIOR"] = false,
+	}
+	if cfg.AdditionalPower and self.additionalPower and hasAdditionalPower[select(2, UnitClass("player"))] then
+		referenceElement = self.additionalPower
+	else
+		referenceElement = self.power
+	end
 	-- Attach the first icon to the right border of self.power
-	local lastElement = {"BOTTOMRIGHT", self.power, "TOPRIGHT"}
+	local lastElement = {"BOTTOMRIGHT", referenceElement, "TOPRIGHT"}
 
 	-- Status icon texture names and conditions
 	local icons = {
@@ -541,6 +557,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 
 	-- Update dispel table on talent update
 	if unit == "player" then self:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED", oUF_Hank.UpdateDispel) end
+	if unit == "player" then self:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED", oUF_Hank.UpdateStatus) end
 
 	-- HP%
 	local health = {}
@@ -738,33 +755,43 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 		local animXPFadeIn = xprepDummy:CreateAnimationGroup()
 		-- A short delay so the user needs to mouseover a short time for the xp/rep display to show up
 		local delayXP = animXPFadeIn:CreateAnimation("Alpha")
-		delayXP:SetChange(0)
+		delayXP:SetFromAlpha(0)
+		delayXP:SetToAlpha(0)
 		delayXP:SetDuration(cfg.DelayXP)
 		delayXP:SetOrder(1)
 		local alphaInXP = animXPFadeIn:CreateAnimation("Alpha")
-		alphaInXP:SetChange(1)
+		alphaInXP:SetFromAlpha(0)
+		alphaInXP:SetToAlpha(1)
 		alphaInXP:SetSmoothing("OUT")
 		alphaInXP:SetDuration(1.5)
 		alphaInXP:SetOrder(2)
 
 		local animPowerFadeOut = powerDummy:CreateAnimationGroup()
 		local delayPower = animPowerFadeOut:CreateAnimation("Alpha")
-		delayPower:SetChange(0)
+		delayPower:SetFromAlpha(1)
+		delayPower:SetToAlpha(1)
 		delayPower:SetDuration(cfg.DelayXP)
 		delayPower:SetOrder(1)
 		local alphaOutPower = animPowerFadeOut:CreateAnimation("Alpha")
-		alphaOutPower:SetChange(-1)
+		alphaOutPower:SetFromAlpha(1)
+		alphaOutPower:SetToAlpha(0)
 		alphaOutPower:SetSmoothing("OUT")
 		alphaOutPower:SetDuration(1.5)
 		alphaOutPower:SetOrder(2)
 
 		local animRaidIconFadeOut = raidIconDummy:CreateAnimationGroup()
 		local delayIcon = animRaidIconFadeOut:CreateAnimation("Alpha")
-		delayIcon:SetChange(0)
+		-- TODO confirm this change in raid
+		-- delayIcon:SetChange(0)
+		delayIcon:SetFromAlpha(1)
+		delayIcon:SetToAlpha(1)
 		delayIcon:SetDuration(cfg.DelayXP * .75)
 		delayIcon:SetOrder(1)
 		local alphaOutIcon = animRaidIconFadeOut:CreateAnimation("Alpha")
-		alphaOutIcon:SetChange(-1)
+		-- TODO confirm this change in raid
+		-- alphaOutIcon:SetChange(-1)
+		alphaOutIcon:SetFromAlpha(1)
+		alphaOutIcon:SetToAlpha(0)
 		alphaOutIcon:SetSmoothing("OUT")
 		alphaOutIcon:SetDuration(0.5)
 		alphaOutIcon:SetOrder(2)
@@ -830,7 +857,6 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 
 	-- Runes
 	if unit == "player" and playerClass == "DEATHKNIGHT" then
-		local runemap = { 1, 2, 5, 6, 3, 4 }
 		self.Runes = CreateFrame("Frame", nil, self)
 		self.Runes:SetPoint("TOPRIGHT", self, "BOTTOMRIGHT")
 		self.Runes:SetSize(96, 16)
@@ -839,7 +865,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 		self.Runes.height = 16
 		self.Runes.width = 16
 
-		for i = 1, 6 do
+		for i = 1, UnitPowerMax("player", SPELL_POWER_RUNES) do
 			self.Runes[i] = CreateFrame("StatusBar", nil, self.Runes)
 			self.Runes[i]:SetStatusBarTexture("Interface\\AddOns\\oUF_Hank\\textures\\blank.blp")
 			self.Runes[i]:SetSize(16, 16)
@@ -877,7 +903,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 
 			local anim = shinywheee:CreateAnimationGroup()
 			local alphaIn = anim:CreateAnimation("Alpha")
-			alphaIn:SetChange(0.3)
+			-- alphaIn:SetChange(0.3)
 			alphaIn:SetDuration(0.4)
 			alphaIn:SetOrder(1)
 			local rotateIn = anim:CreateAnimation("Rotation")
@@ -890,7 +916,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 			scaleIn:SetDuration(0.4)
 			scaleIn:SetOrder(1)
 			local alphaOut = anim:CreateAnimation("Alpha")
-			alphaOut:SetChange(-0.5)
+			-- alphaOut:SetChange(-0.5)
 			alphaOut:SetDuration(0.4)
 			alphaOut:SetOrder(2)
 			local rotateOut = anim:CreateAnimation("Rotation")
@@ -907,7 +933,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 			shinywheee:SetScript("OnShow", function() anim:Play() end)
 
 			self.Runes[i]:SetScript("OnValueChanged", function(self, val)
-				local start, duration, runeReady = GetRuneCooldown(runemap[i])
+				local start, duration, runeReady = GetRuneCooldown(i)
 				if runeReady then
 					self.last = 0
 					-- Rune ready: show all 16x16px, play animation
@@ -923,7 +949,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 			end)
 		end
 
-		self.Runes.PostUpdateRune = function(self, rune, rid, start, duration, runeReady)
+		self.Runes.PostUpdate = function(self, rune, rid, start, duration, runeReady)
 			if not runeReady then
 				local val = GetTime() - start
 				-- Dot distance from top & bottom of texture: 4px
@@ -937,11 +963,13 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 	local initClassIconAnimation, updateClassIconAnimation
 	local initClassIcons, initClassSingleIcon
 	-- animation: fade in
-	if unit == "player" and (playerClass == "MONK" or playerClass == "PALADIN") then
+	if unit == "player" and (playerClass == "MONK" or playerClass == "PALADIN" or playerClass == "WARLOCK") then
 		initClassIconAnimation = function(unitFrame, i)
 			unitFrame.ClassIcons.animations[i] = unitFrame.ClassIcons[i]:CreateAnimationGroup()
 			local alphaIn = unitFrame.ClassIcons.animations[i]:CreateAnimation("Alpha")
-			alphaIn:SetChange(1)
+			-- alphaIn:SetChange(1)
+			alphaIn:SetFromAlpha(0)
+			alphaIn:SetToAlpha(1)
 			alphaIn:SetSmoothing("OUT")
 			alphaIn:SetDuration(1)
 			alphaIn:SetOrder(1)
@@ -951,7 +979,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 		updateClassIconAnimation = function(unitFrame, current, max)
 			-- bail if we don't have ClassIcons to animate
 			if current == nil then return end
-			
+
 			unitFrame.ClassIcons.animLastState = unitFrame.ClassIcons.animLastState or 0
 			if current > 0 then
 				if unitFrame.ClassIcons.animLastState < current then
@@ -969,38 +997,6 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 				end
 			end
 			unitFrame.ClassIcons.animLastState = current
-		end
-	end
-
-	-- Warlock secondary resource (requires oUF_WarlockSpecBars)
-	local showWarlockBar = playerClass == "WARLOCK" and IsAddOnLoaded("oUF_WarlockSpecBars")
-	if unit == "player" and showWarlockBar then
-		initClassIcons = function(unitFrame)
-			local data = oUF_Hank.classResources[playerClass]
-			local wb = CreateFrame("Frame", "oUFHank_WarlockSpecBar", unitFrame)
-			wb:SetPoint("TOPRIGHT", self, "BOTTOMRIGHT", 0, 0)
-			wb:SetSize(90, data.size[2])
-
-			wb.PostUpdate = function(icons, spec)
-				if spec == SPEC_WARLOCK_DEMONOLOGY then
-					icons[1]:SetOrientation("HORIZONTAL")
-					icons[1]:SetSize(data.size[1] * 4, data.size[2] / 4)
-					icons[1]:SetStatusBarTexture('Interface\\AddOns\\oUF_Hank\\textures\\flat.blp')
-				else
-					icons[1]:SetOrientation("VERTICAL")
-					icons[1]:SetSize(data.size[1], data.size[2])
-					icons[1]:SetStatusBarTexture(data['active'][1])
-
-					for i=1,4 do
-						-- wtf, don't assume everyone wants automagic partitioning!
-						icons[i]:SetSize(data.size[1], data.size[2])
-					end
-				end
-			end
-			unitFrame.WarlockSpecBars = wb
-		end
-		initClassSingleIcon = function(unitFrame, i)
-			local data = oUF_Hank.classResources[playerClass]
 		end
 	end
 
@@ -1080,7 +1076,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 
 			local anim = glowywheee:CreateAnimationGroup()
 			local alphaIn = anim:CreateAnimation("Alpha")
-			alphaIn:SetChange(0.5)
+			-- alphaIn:SetChange(0.5)
 			alphaIn:SetSmoothing("OUT")
 			alphaIn:SetDuration(1.5)
 			alphaIn:SetOrder(1)
@@ -1108,9 +1104,9 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 	end
 
 	-- StatusBarIcons: Totems / Soul Shards / Burning Embers / Demonic Fury
-	if unit == "player" and (showTotemBar or showWarlockBar) then
+	if unit == "player" and showTotemBar then
 		local data = oUF_Hank.classResources[playerClass]
-		local displayType = showTotemBar and "TotemBar" or "WarlockSpecBars"
+		local displayType = "TotemBar"
 
 		if initClassIcons then
 			initClassIcons(self)
@@ -1148,8 +1144,8 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 				initClassIconAnimation(self, i, icon)
 			end
 		end
-	-- ClassIcons: Harmony Orbs / Shadow Orbs / Holy Power
-	elseif unit == "player" and (playerClass == "MONK" or playerClass == "PRIEST" or playerClass == "PALADIN" or playerClass == "WARLOCK") then
+	-- ClassIcons: Harmony Orbs / Holy Power / Warlock Shards
+	elseif unit == "player" and (playerClass == "MONK" or playerClass == "PALADIN" or playerClass == "WARLOCK") then
 		local data = oUF_Hank.classResources[playerClass]
 		local bg = {}
 		self.ClassIcons = {}
@@ -1208,7 +1204,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 			end
 		end
 
-		self.ClassIcons.PostUpdate = function(_, current, max, changed, event)
+		self.ClassIcons.PostUpdate = function(_, current, max, changed, powerType, event)
 			local hide = false
 			if event == 'ClassPowerDisable' then
 				hide = true
@@ -1227,121 +1223,22 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 		end
 	end
 
-	-- Eclipse display
-	if unit == "player" and playerClass == "DRUID" then
-		self.EclipseBar = CreateFrame("Frame", nil, self)
-		self.EclipseBar:SetSize(22, 22)
-		self.EclipseBar:SetPoint("TOPRIGHT", self, "BOTTOMRIGHT")
+	if unit == "player" and cfg.AdditionalPower and (playerClass == "DRUID" or playerClass == 'PRIEST' or playerClass == "SHAMAN") then
+		local additionalPower = self:CreateFontString(nil, "OVERLAY")
+		additionalPower:SetFontObject("UFFontMedium")
+		additionalPower:SetPoint("TOPRIGHT", power, "TOPRIGHT", 0, 15)
+		self:Tag(additionalPower, "[apDetailed]")
+		self.additionalPower = additionalPower
 
-		-- Dummies
-		self.EclipseBar.LunarBar = CreateFrame("StatusBar", nil, self.EclipseBar)
-		self.EclipseBar.SolarBar = CreateFrame("StatusBar", nil, self.EclipseBar)
+		-- Register it with oUF
+		local dummyBar = CreateFrame("StatusBar", nil, self)
+		self.DruidMana = dummyBar
 
-		self.EclipseBar.bg = self.EclipseBar:CreateTexture(nil, "ARTWORK")
-		self.EclipseBar.bg:SetTexture("Interface\\AddOns\\oUF_Hank\\textures\\eclipse.blp")
-		self.EclipseBar.bg:SetAllPoints()
-		self.EclipseBar.bg:SetTexCoord(0, 22 / 256, 0, 22 / 64)
-
-		self.EclipseBar.fill = self.EclipseBar:CreateTexture(nil, "OVERLAY")
-		self.EclipseBar.fill:SetTexture("Interface\\AddOns\\oUF_Hank\\textures\\eclipse.blp")
-		self.EclipseBar.fill:SetAllPoints()
-
-		self.EclipseBar.direction = self.EclipseBar:CreateTexture(nil, "OVERLAY")
-		self.EclipseBar.direction:SetDrawLayer("OVERLAY", 1)
-		self.EclipseBar.direction:SetSize(11, 11)
-		self.EclipseBar.direction:SetTexture("Interface\\AddOns\\oUF_Hank\\textures\\eclipse.blp")
-		self.EclipseBar.direction:SetPoint("BOTTOMRIGHT", self.EclipseBar, "BOTTOMRIGHT", 3, -3)
-		self.EclipseBar.direction:SetTexCoord(0, 22 / 256, 0, 22 / 64)
-
-		self.EclipseBar.counter = self.EclipseBar:CreateFontString(nil, "OVERLAY")
-		self.EclipseBar.counter:SetFontObject("UFFontMedium")
-		self.EclipseBar.counter:SetPoint("RIGHT", self.EclipseBar, "LEFT", -5, 0)
-
-		-- Initialize direction on load
-		self.EclipseBar.direction:SetVertexColor(unpack(cfg.colors.power.ECLIPSE[GetEclipseDirection() == "sun" and "SOLAR" or "LUNAR"]))
-
-		-- Play direction indicator animation on direction change (100% solar or lunar)
-		-- self.EclipseBar.PostDirectionChange = function()
-		-- 	self.EclipseBar.direction.frame = nil
-		-- 	self.EclipseBar:SetScript("OnUpdate", function(_ , elapsed)
-		-- 		AnimateTexCoords(self.EclipseBar.direction, 256, 64, 22, 22, 11, elapsed, 0.025)
-		-- 		if self.EclipseBar.direction.frame > 6 then
-		-- 			self.EclipseBar.direction:SetVertexColor(unpack(cfg.colors.power.ECLIPSE[GetEclipseDirection() == "sun" and "SOLAR" or "LUNAR"]))
-		-- 		end
-		-- 		if self.EclipseBar.direction.frame == 11 then
-		-- 			self.EclipseBar:SetScript("OnUpdate", nil)
-		-- 			self.EclipseBar.direction:SetTexCoord(0, 22 / 256, 0, 22 / 64)
-		-- 		end
-		-- 	end)
-		-- end
-
-		-- Initialize phase
-		if UnitPower("player", 8) < 0 then self.EclipseBar.lastPhase = "sun" end
-
-		-- Solar / lunar power updated
-		self.EclipseBar.PostUpdatePower = function()
-			-- Currently in solar phase
-			if self.EclipseBar.SolarBar:GetValue() < self.EclipseBar.LunarBar:GetValue() then
-				-- Solar phase has just been entered => play animation
-				if self.EclipseBar.lastPhase == "moon" then
-					self.EclipseBar.bg.frame = nil
-					self.EclipseBar:SetScript("OnUpdate", function(_ , elapsed)
-						-- Blizzard global function (UIParent.lua)
-						AnimateTexCoords(self.EclipseBar.bg, 256, 64, 22, 22, 11, elapsed, 0.025)
-						if self.EclipseBar.bg.frame > 6 then self.EclipseBar.bg:SetVertexColor(unpack(cfg.colors.power.ECLIPSE.SOLAR)) end
-						-- Stop animation on last frame
-						if self.EclipseBar.bg.frame == 11 then
-							self.EclipseBar:SetScript("OnUpdate", nil)
-							self.EclipseBar.bg:SetTexCoord(0, 22 / 256, 0, 22 / 64)
-						end
-					end)
-				else
-					self.EclipseBar.bg:SetVertexColor(unpack(cfg.colors.power.ECLIPSE.SOLAR))
-				end
-
-				-- Fill circle
-				self.EclipseBar.fill:SetTexCoord((10 + floor(self.EclipseBar.SolarBar:GetValue() / 10)) * 22 / 256, (11 + floor(self.EclipseBar.SolarBar:GetValue() / 10)) * 22 / 256, 22 / 64, 44 / 64)
-
-				-- Update cast counter
-				if GetEclipseDirection() == "sun" then
-					-- left lunar eclipse, working towards solar eclipse at double speed
-					self.EclipseBar.counter:SetText(ceil(100/40 + self.EclipseBar.SolarBar:GetValue()/40) .. " Starfires")
-				else
-					self.EclipseBar.counter:SetText(ceil(100/30 - self.EclipseBar.SolarBar:GetValue()/15) .. " Wraths")
-				end
-
-				self.EclipseBar.lastPhase = "sun"
-			-- Currently in lunar phase
+		self.DruidMana.PostUpdate = function(_, unit, current, max)
+			if select(2, UnitPowerType(unit)) ~= ADDITIONAL_POWER_BAR_NAME then
+				additionalPower:Show()
 			else
-				-- Lunar phase has just been entered => play animation
-				if self.EclipseBar.lastPhase == "sun" then
-					self.EclipseBar.bg.frame = nil
-					self.EclipseBar:SetScript("OnUpdate", function(_ , elapsed)
-						-- Blizzard global function (UIParent.lua)
-						AnimateTexCoords(self.EclipseBar.bg, 256, 64, 22, 22, 11, elapsed, 0.025)
-						if self.EclipseBar.bg.frame > 6 then self.EclipseBar.bg:SetVertexColor(unpack(cfg.colors.power.ECLIPSE.LUNAR)) end
-						-- Stop animation on last frame
-						if self.EclipseBar.bg.frame == 11 then
-							self.EclipseBar:SetScript("OnUpdate", nil)
-							self.EclipseBar.bg:SetTexCoord(0, 22 / 256, 0, 22 / 64)
-						end
-					end)
-				else
-					self.EclipseBar.bg:SetVertexColor(unpack(cfg.colors.power.ECLIPSE.LUNAR))
-				end
-
-				-- Fill circle
-				self.EclipseBar.fill:SetTexCoord((11 + floor(self.EclipseBar.LunarBar:GetValue() / 10)) * 22 / 256, (10 + floor(self.EclipseBar.LunarBar:GetValue() / 10)) * 22 / 256, 22 / 64, 44 / 64)
-
-				-- Update cast counter
-				if GetEclipseDirection() == "sun" then
-					self.EclipseBar.counter:SetText(ceil(100/40 - self.EclipseBar.LunarBar:GetValue()/20) .. " Starfires")
-				else
-					-- left solar eclipse, working towards lunar eclipse at double speed
-					self.EclipseBar.counter:SetText(ceil(100/30 + self.EclipseBar.LunarBar:GetValue()/30) .. " Wraths")
-				end
-
-				self.EclipseBar.lastPhase = "moon"
+				additionalPower:Hide()
 			end
 		end
 	end
@@ -1543,7 +1440,8 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 
 		cb.Dummy.anim = cb.Dummy:CreateAnimationGroup()
 		local alphaOut = cb.Dummy.anim:CreateAnimation("Alpha")
-		alphaOut:SetChange(-1)
+		alphaOut:SetFromAlpha(1)
+		alphaOut:SetToAlpha(0)
 		alphaOut:SetDuration(1)
 		alphaOut:SetOrder(0)
 
