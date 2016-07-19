@@ -53,7 +53,7 @@ colors = setmetatable({
 			LUNAR = {0.3, 1, 1},
 		},
 	}, {__index = oUF.colors.power}),
-	
+
 	runes = setmetatable({
 		-- Blood
 		{0.81, 0.26, 0.1},
@@ -263,6 +263,12 @@ AurasPLAYER = {
 	WhiteList = {
 	},
 },
+
+--------------------- Additional Power ----------------------
+-------------------------------------------------------------
+
+-- Show additional power on player frame (true/false)
+AdditionalPower = true,
 
 --------------------- Threat indicator ----------------------
 -------------------------------------------------------------
