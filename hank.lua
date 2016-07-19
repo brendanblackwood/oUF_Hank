@@ -3,7 +3,7 @@ local cfg = oUF_Hank_config
 
 -- GLOBALS: oUF_player, oUF_pet, oUF_target, oUF_focus
 -- GLOBALS: _G, MIRRORTIMER_NUMTIMERS, SPELL_POWER_HOLY_POWER, MAX_TOTEMS, MAX_COMBO_POINTS, DebuffTypeColor, SPEC_WARLOCK_DEMONOLOGY
--- GLOBALS: ToggleDropDownMenu, UnitIsUnit, GetTime, AnimateTexCoords, GetEclipseDirection, MirrorTimerColors, GetSpecialization, UnitHasVehicleUI, UnitHealth, UnitHealthMax, UnitPower, UnitIsDead, UnitIsGhost, UnitIsConnected, UnitAffectingCombat, GetLootMethod, UnitIsGroupLeader, UnitIsPVPFreeForAll, UnitIsPVP, UnitInRaid, IsResting, UnitAura, UnitCanAttack, UnitIsGroupAssistant, GetRuneCooldown, UnitClass, CancelUnitBuff, CreateFrame, IsAddOnLoaded, UnitFrame_OnEnter, UnitFrame_OnLeave
+-- GLOBALS: ToggleDropDownMenu, UnitIsUnit, GetTime, AnimateTexCoords, MirrorTimerColors, GetSpecialization, UnitHasVehicleUI, UnitHealth, UnitHealthMax, UnitPower, UnitIsDead, UnitIsGhost, UnitIsConnected, UnitAffectingCombat, GetLootMethod, UnitIsGroupLeader, UnitIsPVPFreeForAll, UnitIsPVP, UnitInRaid, IsResting, UnitAura, UnitCanAttack, UnitIsGroupAssistant, GetRuneCooldown, UnitClass, CancelUnitBuff, CreateFrame, IsAddOnLoaded, UnitFrame_OnEnter, UnitFrame_OnLeave
 local unpack = unpack
 local pairs = pairs
 local ipairs = ipairs
@@ -1104,9 +1104,9 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 	end
 
 	-- StatusBarIcons: Totems / Soul Shards / Burning Embers / Demonic Fury
-	if unit == "player" and (showTotemBar or showWarlockBar) then
+	if unit == "player" and showTotemBar then
 		local data = oUF_Hank.classResources[playerClass]
-		local displayType = showTotemBar and "TotemBar" or "WarlockSpecBars"
+		local displayType = "TotemBar"
 
 		if initClassIcons then
 			initClassIcons(self)
