@@ -244,8 +244,29 @@ end
 
 -- Manual status icons update
 oUF_Hank.UpdateStatus = function(self)
+	local referenceElement
+	-- TODO find a better way to do this
+	hasAdditionalPower = {
+		["DEMONHUNTER"] = false,
+		["DEATHKNIGHT"] = false,
+		["DRUID"] = (GetSpecialization() ~= 4),
+		["HUNTER"] = false,
+		["MAGE"] = false,
+		["MONK"] = false,
+		["PALADIN"] = false,
+		["PRIEST"] = (GetSpecialization() == 3),
+		["ROGUE"] = false,
+		["SHAMAN"] = (GetSpecialization() == 1 or GetSpecialization() == 2),
+		["WARLOCK"] = false,
+		["WARRIOR"] = false,
+	}
+	if cfg.AdditionalPower and self.additionalPower and hasAdditionalPower[select(2, UnitClass("player"))] then
+		referenceElement = self.additionalPower
+	else
+		referenceElement = self.power
+	end
 	-- Attach the first icon to the right border of self.power
-	local lastElement = {"BOTTOMRIGHT", self.power, "TOPRIGHT"}
+	local lastElement = {"BOTTOMRIGHT", referenceElement, "TOPRIGHT"}
 
 	-- Status icon texture names and conditions
 	local icons = {
@@ -536,6 +557,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 
 	-- Update dispel table on talent update
 	if unit == "player" then self:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED", oUF_Hank.UpdateDispel) end
+	if unit == "player" then self:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED", oUF_Hank.UpdateStatus) end
 
 	-- HP%
 	local health = {}
@@ -1201,11 +1223,12 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 		end
 	end
 
-	if unit == "player" and (playerClass == "DRUID" or playerClass == 'PRIEST' or playerClass == "SHAMAN") then
+	if unit == "player" and cfg.AdditionalPower and (playerClass == "DRUID" or playerClass == 'PRIEST' or playerClass == "SHAMAN") then
 		local additionalPower = self:CreateFontString(nil, "OVERLAY")
 		additionalPower:SetFontObject("UFFontMedium")
 		additionalPower:SetPoint("TOPRIGHT", power, "TOPRIGHT", 0, 15)
 		self:Tag(additionalPower, "[apDetailed]")
+		self.additionalPower = additionalPower
 
 		-- Register it with oUF
 		local dummyBar = CreateFrame("StatusBar", nil, self)
