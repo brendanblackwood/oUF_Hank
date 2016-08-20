@@ -865,7 +865,8 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 		self.Runes.height = 16
 		self.Runes.width = 16
 
-		for i = 1, UnitPowerMax("player", SPELL_POWER_RUNES) do
+		-- TODO why doesn't UnitPowerMax("player", SPELL_POWER_RUNES) return the right number on init?
+		for i = 1, 6 do
 			self.Runes[i] = CreateFrame("StatusBar", nil, self.Runes)
 			self.Runes[i]:SetStatusBarTexture("Interface\\AddOns\\oUF_Hank\\textures\\blank.blp")
 			self.Runes[i]:SetSize(16, 16)
