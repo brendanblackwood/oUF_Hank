@@ -2,9 +2,13 @@
 
 -- Shorten health and power numbers
 local function valShort(value)
-	if(value >= 1e6) then
+	if(value >= 1e9) then -- "1.32b"
+		return ("%.2f"):format(value / 1e9):gsub("%.?0+$", "") .. "b"
+	elseif(value >= 1e7) then -- "132.1m"
+		return ("%.1f"):format(value / 1e6):gsub("%.?0+$", "") .. "m"
+	elseif(value >= 1e6) then -- "1.32m"
 		return ("%.2f"):format(value / 1e6):gsub("%.?0+$", "") .. "m"
-	elseif(value >= 1e4) then
+	elseif(value >= 1e4) then -- 132.1k
 		return ("%.1f"):format(value / 1e3):gsub("%.?0+$", "") .. "k"
 	else
 		return value
