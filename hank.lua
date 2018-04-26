@@ -270,16 +270,16 @@ oUF_Hank.UpdateStatus = function(self)
 
 	-- Status icon texture names and conditions
 	local icons = {
-		["C"] = {"Combat", UnitAffectingCombat("player")},
-		["R"] = {"Resting", IsResting()},
-		["L"] = {"Leader", UnitIsGroupLeader("player")},
-		["M"] = {"MasterLooter", ({GetLootMethod()})[1] == "master" and (
+		["C"] = {"CombatIndicator", UnitAffectingCombat("player")},
+		["R"] = {"RestingIndicator", IsResting()},
+		["L"] = {"LeaderIndicator", UnitIsGroupLeader("player")},
+		["M"] = {"MasterLooterIndicator", ({GetLootMethod()})[1] == "master" and (
 				(({GetLootMethod()})[2]) == 0 or
 				((({GetLootMethod()})[2]) and UnitIsUnit("player", "party" .. ({GetLootMethod()})[2])) or
 				((({GetLootMethod()})[3]) and UnitIsUnit("player", "raid" .. ({GetLootMethod()})[3]))
 			)},
-		["P"] = {"PvP", UnitIsPVPFreeForAll("player") or UnitIsPVP("player")},
-		["A"] = {"Assistant", UnitInRaid("player") and UnitIsGroupAssistant("player") and not UnitIsGroupLeader("player")},
+		["P"] = {"PvPIndicator", UnitIsPVPFreeForAll("player") or UnitIsPVP("player")},
+		["A"] = {"AssistantIndicator", UnitInRaid("player") and UnitIsGroupAssistant("player") and not UnitIsGroupLeader("player")},
 	}
 
 	for i = -1, -strlen(cfg.StatusIcons), -1 do
@@ -301,9 +301,9 @@ oUF_Hank.PostUpdateName = function(self)
 	if (self.name) then
 		-- Reanchor raid icon to the largest string (either name or power)
 		if self.name:GetWidth() >= self.power:GetWidth() then
-			self.RaidIcon:SetPoint("LEFT", self.name, "RIGHT", 10, 0)
+			self.RaidTargetIndicator:SetPoint("LEFT", self.name, "RIGHT", 10, 0)
 		else
-			self.RaidIcon:SetPoint("LEFT", self.power, "RIGHT", 10, 0)
+			self.RaidTargetIndicator:SetPoint("LEFT", self.power, "RIGHT", 10, 0)
 		end
 	end
 end
@@ -679,12 +679,12 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 
 		-- Create the status icons
 		for i, icon in ipairs({
-			{"C", "Combat"},
-			{"R", "Resting"},
-			{"L", "Leader"},
-			{"M", "MasterLooter"},
-			{"P", "PvP"},
-			{"A", "Assistant"},
+			{"C", "CombatIndicator"},
+			{"R", "RestingIndicator"},
+			{"L", "LeaderIndicator"},
+			{"M", "MasterLooterIndicator"},
+			{"P", "PvPIndicator"},
+			{"A", "AssistantIndicator"},
 		}) do
 			if match(cfg.StatusIcons, icon[1]) then
 				self[icon[2]] = self:CreateTexture(nil, "OVERLAY")
@@ -701,17 +701,17 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 
 	-- Raid targets
 	if unit == "player" then
-		self.RaidIcon = self:CreateTexture(nil, "OVERLAY")
-		self.RaidIcon:SetSize(40, 40)
-		self.RaidIcon:SetTexture("Interface\\AddOns\\oUF_Hank\\textures\\raidicons.blp")
-		self.RaidIcon:SetPoint("RIGHT", self.power, "LEFT", -15, 0)
-		self.RaidIcon:SetPoint("TOP", self, "TOP", 0, -5)
+		self.RaidTargetIndicator = self:CreateTexture(nil, "OVERLAY")
+		self.RaidTargetIndicator:SetSize(40, 40)
+		self.RaidTargetIndicator:SetTexture("Interface\\AddOns\\oUF_Hank\\textures\\raidicons.blp")
+		self.RaidTargetIndicator:SetPoint("RIGHT", self.power, "LEFT", -15, 0)
+		self.RaidTargetIndicator:SetPoint("TOP", self, "TOP", 0, -5)
 	elseif unit == "target" or unit == "focus" then
-		self.RaidIcon = self:CreateTexture(nil, "OVERLAY")
-		self.RaidIcon:SetSize(40, 40)
-		self.RaidIcon:SetTexture("Interface\\AddOns\\oUF_Hank\\textures\\raidicons.blp")
-		self.RaidIcon:SetPoint("LEFT", self.name, "RIGHT", 10, 0)
-		self.RaidIcon:SetPoint("TOP", self, "TOP", 0, -5)
+		self.RaidTargetIndicator = self:CreateTexture(nil, "OVERLAY")
+		self.RaidTargetIndicator:SetSize(40, 40)
+		self.RaidTargetIndicator:SetTexture("Interface\\AddOns\\oUF_Hank\\textures\\raidicons.blp")
+		self.RaidTargetIndicator:SetPoint("LEFT", self.name, "RIGHT", 10, 0)
+		self.RaidTargetIndicator:SetPoint("TOP", self, "TOP", 0, -5)
 
 		-- Anchoring on name update
 		tinsert(self.__elements, oUF_Hank.PostUpdateName)
@@ -721,11 +721,11 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 			end
 		end)
 	elseif unit:find("boss") then
-		self.RaidIcon = self:CreateTexture(nil)
-		self.RaidIcon:SetDrawLayer("OVERLAY", 1)
-		self.RaidIcon:SetSize(24, 24)
-		self.RaidIcon:SetTexture("Interface\\AddOns\\oUF_Hank\\textures\\raidicons.blp")
-		self.RaidIcon:SetPoint("BOTTOMRIGHT", health[1], 5, -5)
+		self.RaidTargetIndicator = self:CreateTexture(nil)
+		self.RaidTargetIndicator:SetDrawLayer("OVERLAY", 1)
+		self.RaidTargetIndicator:SetSize(24, 24)
+		self.RaidTargetIndicator:SetTexture("Interface\\AddOns\\oUF_Hank\\textures\\raidicons.blp")
+		self.RaidTargetIndicator:SetPoint("BOTTOMRIGHT", health[1], 5, -5)
 	end
 
 	-- XP, reputation
@@ -749,7 +749,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 		powerDummy:Hide()
 		local raidIconDummy = self:CreateTexture(nil, "OVERLAY")
 		raidIconDummy:SetTexture("Interface\\AddOns\\oUF_Hank\\textures\\raidicons.blp")
-		raidIconDummy:SetAllPoints(self.RaidIcon)
+		raidIconDummy:SetAllPoints(self.RaidTargetIndicator)
 		raidIconDummy:Hide()
 
 		local animXPFadeIn = xprepDummy:CreateAnimationGroup()
@@ -806,16 +806,16 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 		self:HookScript("OnEnter", function(_, motion)
 			if motion then
 				self.power:SetAlpha(0)
-				self.RaidIcon:SetAlpha(0)
+				self.RaidTargetIndicator:SetAlpha(0)
 				powerDummy:SetText(self.power:GetText())
 				powerDummy:Show()
 				xprepDummy:SetText(self.xprep:GetText())
 				xprepDummy:Show()
-				raidIconDummy:SetTexCoord(self.RaidIcon:GetTexCoord())
-				if self.RaidIcon:IsShown() then raidIconDummy:Show() end
+				raidIconDummy:SetTexCoord(self.RaidTargetIndicator:GetTexCoord())
+				if self.RaidTargetIndicator:IsShown() then raidIconDummy:Show() end
 				animXPFadeIn:Play()
 				animPowerFadeOut:Play()
-				if self.RaidIcon:IsShown() then animRaidIconFadeOut:Play() end
+				if self.RaidTargetIndicator:IsShown() then animRaidIconFadeOut:Play() end
 			end
 		end)
 
@@ -828,7 +828,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 			raidIconDummy:Hide()
 			self.xprep:SetAlpha(0)
 			self.power:SetAlpha(1)
-			self.RaidIcon:SetAlpha(1)
+			self.RaidTargetIndicator:SetAlpha(1)
 		end)
 	end
 
@@ -962,12 +962,12 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 	end
 
 	local initClassIconAnimation, updateClassIconAnimation
-	local initClassIcons, initClassSingleIcon
+	local initClassPower, initClassSingleIcon
 	-- animation: fade in
 	if unit == "player" and (playerClass == "MONK" or playerClass == "PALADIN" or playerClass == "WARLOCK") then
 		initClassIconAnimation = function(unitFrame, i)
-			unitFrame.ClassIcons.animations[i] = unitFrame.ClassIcons[i]:CreateAnimationGroup()
-			local alphaIn = unitFrame.ClassIcons.animations[i]:CreateAnimation("Alpha")
+			unitFrame.ClassPower.animations[i] = unitFrame.ClassPower[i]:CreateAnimationGroup()
+			local alphaIn = unitFrame.ClassPower.animations[i]:CreateAnimation("Alpha")
 			-- alphaIn:SetChange(1)
 			alphaIn:SetFromAlpha(0)
 			alphaIn:SetToAlpha(1)
@@ -975,36 +975,36 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 			alphaIn:SetDuration(1)
 			alphaIn:SetOrder(1)
 
-			unitFrame.ClassIcons.animations[i]:SetScript("OnFinished", function() unitFrame.ClassIcons[i]:SetAlpha(1) end)
+			unitFrame.ClassPower.animations[i]:SetScript("OnFinished", function() unitFrame.ClassPower[i]:SetAlpha(1) end)
 		end
 		updateClassIconAnimation = function(unitFrame, current, max)
-			-- bail if we don't have ClassIcons to animate
+			-- bail if we don't have ClassPower to animate
 			if current == nil then return end
 
-			unitFrame.ClassIcons.animLastState = unitFrame.ClassIcons.animLastState or 0
+			unitFrame.ClassPower.animLastState = unitFrame.ClassPower.animLastState or 0
 			if current > 0 then
-				if unitFrame.ClassIcons.animLastState < current then
+				if unitFrame.ClassPower.animLastState < current then
 					-- Play animation only when we gain power
-					unitFrame.ClassIcons[current]:SetAlpha(0)
-					unitFrame.ClassIcons.animations[current]:Play();
+					unitFrame.ClassPower[current]:SetAlpha(0)
+					unitFrame.ClassPower.animations[current]:Play();
 				end
 			else
 				for i = 1, max do
 					-- no holy power, stop all running animations
-					unitFrame.ClassIcons.animLastState = current
-					if unitFrame.ClassIcons.animations[i]:IsPlaying() then
-						unitFrame.ClassIcons.animations[i]:Stop()
+					unitFrame.ClassPower.animLastState = current
+					if unitFrame.ClassPower.animations[i]:IsPlaying() then
+						unitFrame.ClassPower.animations[i]:Stop()
 					end
 				end
 			end
-			unitFrame.ClassIcons.animLastState = current
+			unitFrame.ClassPower.animLastState = current
 		end
 	end
 
 	-- Totems (requires oUF_TotemBar)
 	local showTotemBar = playerClass == "SHAMAN" and IsAddOnLoaded("oUF_TotemBar") and cfg.TotemBar
 	if unit == "player" and showTotemBar then
-		initClassIcons = function(unitFrame)
+		initClassPower = function(unitFrame)
 			unitFrame.TotemBar = CreateFrame("Frame", "oUFHank_TotemBar", unitFrame)
 			unitFrame.TotemBar.Destroy = cfg.ClickToDestroy
 			unitFrame.TotemBar.delay = 0.3
@@ -1096,11 +1096,11 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 
 	-- Holy power
 	if unit == "player" and playerClass == "PALADIN" then
-		initClassIcons = function(unitFrame)
-			unitFrame.ClassIcons.animLastState = UnitPower("player", SPELL_POWER_HOLY_POWER)
+		initClassPower = function(unitFrame)
+			unitFrame.ClassPower.animLastState = UnitPower("player", SPELL_POWER_HOLY_POWER)
 		end
 		initClassSingleIcon = function(unitFrame, i)
-			unitFrame.ClassIcons[i]:SetVertexColor(unpack(cfg.colors.power.HOLY_POWER))
+			unitFrame.ClassPower[i]:SetVertexColor(unpack(cfg.colors.power.HOLY_POWER))
 		end
 	end
 
@@ -1109,8 +1109,8 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 		local data = oUF_Hank.classResources[playerClass]
 		local displayType = "TotemBar"
 
-		if initClassIcons then
-			initClassIcons(self)
+		if initClassPower then
+			initClassPower(self)
 		end
 
 		for i = 1, oUF_Hank.classResources[playerClass].max do
@@ -1145,15 +1145,15 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 				initClassIconAnimation(self, i, icon)
 			end
 		end
-	-- ClassIcons: Harmony Orbs / Holy Power / Warlock Shards
+	-- ClassPower: Harmony Orbs / Holy Power / Warlock Shards
 	elseif unit == "player" and (playerClass == "MONK" or playerClass == "PALADIN" or playerClass == "WARLOCK") then
 		local data = oUF_Hank.classResources[playerClass]
 		local bg = {}
-		self.ClassIcons = {}
-		self.ClassIcons.animations = {}
+		self.ClassPower = {}
+		self.ClassPower.animations = {}
 
-		if initClassIcons then
-			initClassIcons(self)
+		if initClassPower then
+			initClassPower(self)
 		end
 
 		for i = 1, oUF_Hank.classResources[playerClass].max do
@@ -1181,21 +1181,21 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 				)
 			end
 
-			self.ClassIcons[i] = bg[i]:CreateTexture(nil, "OVERLAY")
-			self.ClassIcons[i]:SetTexture(data['active'][1])
+			self.ClassPower[i] = bg[i]:CreateTexture(nil, "OVERLAY")
+			self.ClassPower[i]:SetTexture(data['active'][1])
 			if data['active'][2] then
-				self.ClassIcons[i]:SetTexCoord(unpack(data['active'][2]))
+				self.ClassPower[i]:SetTexCoord(unpack(data['active'][2]))
 			else
-				self.ClassIcons[i]:SetTexCoord(0, 1, 0, 1)
+				self.ClassPower[i]:SetTexCoord(0, 1, 0, 1)
 			end
-			self.ClassIcons[i]:SetAllPoints(bg[i])
+			self.ClassPower[i]:SetAllPoints(bg[i])
 
 			-- need access to the background in the PostUpdate function
-			self.ClassIcons[i].bg = bg[i].tex
+			self.ClassPower[i].bg = bg[i].tex
 
 			-- start hidden
-			self.ClassIcons[i]:Hide()
-			self.ClassIcons[i].bg:Hide()
+			self.ClassPower[i]:Hide()
+			self.ClassPower[i].bg:Hide()
 
 			if initClassSingleIcon then
 				initClassSingleIcon(self, i)
@@ -1205,17 +1205,18 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 			end
 		end
 
-		self.ClassIcons.PostUpdate = function(_, current, max, changed, powerType, event)
+		self.ClassPower.PostUpdate = function(_, current, max, changed, powerType)
 			local hide = false
-			if event == 'ClassPowerDisable' then
-				hide = true
-			end
+			-- TODO(7.0): may not matter anymore
+			-- if event == 'ClassPowerDisable' then
+			-- 	hide = true
+			-- end
 			for i = 1, oUF_Hank.classResources[playerClass].max do
 				if hide or i > max then
-					self.ClassIcons[i]:Hide()
-					self.ClassIcons[i].bg:Hide()
+					self.ClassPower[i]:Hide()
+					self.ClassPower[i].bg:Hide()
 				else
-					self.ClassIcons[i].bg:Show()
+					self.ClassPower[i].bg:Show()
 				end
 			end
 			if updateClassIconAnimation then
@@ -1233,9 +1234,9 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 
 		-- Register it with oUF
 		local dummyBar = CreateFrame("StatusBar", nil, self)
-		self.DruidMana = dummyBar
+		self.AdditionalPower = dummyBar
 
-		self.DruidMana.PostUpdate = function(_, unit, current, max)
+		self.AdditionalPower.PostUpdate = function(_, unit, current, max)
 			if select(2, UnitPowerType(unit)) ~= ADDITIONAL_POWER_BAR_NAME then
 				additionalPower:Show()
 			else
@@ -1255,8 +1256,8 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 				relative = self.CPoints[1]
 			elseif self.Runes then
 				relative = self.Runes
-			elseif self.ClassIcons then
-				relative = self.ClassIcons[1]
+			elseif self.ClassPower then
+				relative = self.ClassPower[1]
 			else
 				relative = self
 				offset = 40
