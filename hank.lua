@@ -1197,6 +1197,12 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 			self.ClassPower[i]:Hide()
 			self.ClassPower[i].bg:Hide()
 
+			-- we don't use a StatusBar for Monk/Paladin/Warlock so make noop functions to get around null errors
+			self.ClassPower.UpdateColor = function()
+			end
+			self.ClassPower[i].SetValue = function()
+			end
+
 			if initClassSingleIcon then
 				initClassSingleIcon(self, i)
 			end
