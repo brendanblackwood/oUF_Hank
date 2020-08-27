@@ -1302,7 +1302,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 		self.Debuffs.filter = "HARMFUL"
 
 		-- Buff magnification effect on mouseover
-		self.HighlightAura = CreateFrame("Frame", nil, self)
+		self.HighlightAura = CreateFrame("Frame", nil, self, BackdropTemplateMixin and "BackdropTemplate")
 		self.HighlightAura:SetFrameLevel(5) -- Above auras (level 3) and their cooldown overlay (4)
 		self.HighlightAura:SetBackdrop({bgFile = cfg.AuraBorder})
 		self.HighlightAura:SetBackdropColor(0, 0, 0, 1)
@@ -1346,7 +1346,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 		end
 
 		-- BG
-		cb.Background = CreateFrame("Frame", nil, cb)
+		cb.Background = CreateFrame("Frame", nil, cb, BackdropTemplateMixin and "BackdropTemplate")
 		cb.Background:SetFrameStrata("BACKGROUND")
 		cb.Background:SetPoint("TOPLEFT", cb, "TOPLEFT", -5, 5)
 		cb.Background:SetPoint("BOTTOMRIGHT", cb, "BOTTOMRIGHT", 5, -5)
@@ -1433,7 +1433,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 		end
 
 		-- Animation dummy
-		cb.Dummy = CreateFrame("Frame", nil, self)
+		cb.Dummy = CreateFrame("Frame", nil, self, BackdropTemplateMixin and "BackdropTemplate")
 		cb.Dummy:SetAllPoints(cb.Background)
 		cb.Dummy:SetBackdrop(backdrop)
 		cb.Dummy:SetBackdropColor(0.22, 0.22, 0.19)
