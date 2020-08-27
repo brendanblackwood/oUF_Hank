@@ -556,15 +556,15 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 	self.colors = cfg.colors
 
 	-- Update dispel table on talent update
-	if unit == "player" then self:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED", oUF_Hank.UpdateDispel) end
-	if unit == "player" then self:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED", oUF_Hank.UpdateStatus) end
+	if unit == "player" then self:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED", oUF_Hank.UpdateDispel, true) end
+	if unit == "player" then self:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED", oUF_Hank.UpdateStatus, true) end
 
 	-- HP%
 	local health = {}
 	local healthFill = {}
 
 	if unit == "player" or unit == "target" or unit == "focus" or unit:find("boss") then
-		self:RegisterEvent("UNIT_HEALTH", function(_, _, ...)
+		self:RegisterEvent("UNIT_HEALTH_FREQUENT", function(_, _, ...)
 			if unit == ... then
 				oUF_Hank.UpdateHealth(self)
 			elseif unit == "player" and UnitHasVehicleUI("player") and ... == "vehicle" then
@@ -950,13 +950,19 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 			end)
 		end
 
-		self.Runes.PostUpdate = function(self, rune, rid, start, duration, runeReady)
-			if not runeReady then
-				local val = GetTime() - start
-				-- Dot distance from top & bottom of texture: 4px
-				rune.bg:SetSize(16, 4 + 8 * val / 10)
-				-- Show at least the empty 4 bottom pixels + val% of the 8 pixels of the actual dot = 12px max
-				rune.bg:SetTexCoord(0.25, 0.5, 12 / 16 - 8 * val / 10 / 16, 1)
+		self.Runes.PostUpdate = function(self, runemap)
+			for index, runeID in next, runemap do
+				rune = self[index]
+				if(not rune) then break end
+
+				start, duration, runeReady = GetRuneCooldown(runeID)
+				if not runeReady then
+					local val = GetTime() - start
+					-- Dot distance from top & bottom of texture: 4px
+					rune.bg:SetSize(16, 4 + 8 * val / 10)
+					-- Show at least the empty 4 bottom pixels + val% of the 8 pixels of the actual dot = 12px max
+					rune.bg:SetTexCoord(0.25, 0.5, 12 / 16 - 8 * val / 10 / 16, 1)
+				end
 			end
 		end
 	end
@@ -1218,7 +1224,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 			-- 	hide = true
 			-- end
 			for i = 1, oUF_Hank.classResources[playerClass].max do
-				if hide or i > max then
+				if hide or max == nil or i > max then
 					self.ClassPower[i]:Hide()
 					self.ClassPower[i].bg:Hide()
 				else
