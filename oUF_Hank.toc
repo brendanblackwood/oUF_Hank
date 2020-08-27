@@ -1,8 +1,8 @@
-## Interface: 80000
+## Interface: 90000
 ## Title: oUF_Hank
 ## Author: Hank
 ## Maintainer: Gwyd
-## Version: 8.0.0
+## Version: 9.0.0
 ## Dependencies: oUF
 ## OptionalDeps: oUF_SpellRange, oUF_Totembar
 ## Notes: oUF layout for |cFFFFA628hank|rui
