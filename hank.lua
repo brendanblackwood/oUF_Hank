@@ -564,7 +564,7 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 	local healthFill = {}
 
 	if unit == "player" or unit == "target" or unit == "focus" or unit:find("boss") then
-		self:RegisterEvent("UNIT_HEALTH_FREQUENT", function(_, _, ...)
+		self:RegisterEvent("UNIT_HEALTH", function(_, _, ...)
 			if unit == ... then
 				oUF_Hank.UpdateHealth(self)
 			elseif unit == "player" and UnitHasVehicleUI("player") and ... == "vehicle" then
