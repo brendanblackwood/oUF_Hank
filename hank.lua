@@ -313,7 +313,7 @@ oUF_Hank.PostUpdateIcon = function(icons, unit, icon, index, offset)
 	-- We want the border, not the color for the type indication
 	icon.overlay:SetVertexColor(1, 1, 1)
 
-	local _, _, _, _, dtype, _, _, caster, _, _, _ = UnitAura(unit, index, icon.filter)
+	local _, _, _, dtype, _, _, caster, _, _, _ = UnitAura(unit, index, icon.filter)
 	if caster == "vehicle" then caster = "player" end
 
 	if icon.filter == "HELPFUL" and not UnitCanAttack("player", unit) and caster == "player" and cfg["Auras" .. upper(unit)].StickyAuras.myBuffs then
