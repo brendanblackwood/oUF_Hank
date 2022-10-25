@@ -320,7 +320,7 @@ oUF_Hank.PostUpdateIcon = function(self, button, unit, data, position)
 	-- We want the border, not the color for the type indication
 	button.Overlay:SetVertexColor(1, 1, 1)
 
-	local _, _, _, _, dtype, _, _, caster, _, _, _ = UnitAura(unit, position, filter)
+	local _, _, _, dtype, _, _, caster, _, _, _ = UnitAura(unit, position, filter)
 	if caster == "vehicle" then caster = "player" end
 
 	if filter == "HELPFUL" and not UnitCanAttack("player", unit) and caster == "player" and cfg["Auras" .. upper(unit)].StickyAuras.myBuffs then
