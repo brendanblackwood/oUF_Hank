@@ -96,28 +96,11 @@ oUF_Hank.menu = function(self)
 
 	if(unit == "party" or unit == "partypet") then
 		ToggleDropDownMenu(nil, nil, _G["PartyMemberFrame"..self.id.."DropDown"], "cursor", 0, 0)
+	elseif(cunit == "Target") then
+		ToggleDropDownMenu(nil, nil, _G["TargetFrame"].DropDown, "cursor", 0, 0)
 	elseif(_G[cunit.."FrameDropDown"]) then
 		ToggleDropDownMenu(nil, nil, _G[cunit.."FrameDropDown"], "cursor", 0, 0)
 	end
-end
-
--- Party frames be gone!
-oUF_Hank.HideParty = function()
-	oUF:DisableBlizzard("party")
-	-- for i = 1, 4 do
-	-- 	local party = "PartyMemberFrame" .. i
-	-- 	local frame = _G[party]
-	-- 	-- table.foreach(_G, print)
-	-- 	if frame then
-	-- 		print(party)
-	-- 		frame:UnregisterAllEvents()
-	-- 		frame.Show = function() end
-	-- 		frame:Hide()
-	-- 	end
-
-	-- 	_G[party .. "HealthBar"]:UnregisterAllEvents()
-	-- 	_G[party .. "ManaBar"]:UnregisterAllEvents()
-	-- end
 end
 
 -- Set up the mirror bars (breath, exhaustion etc.)
@@ -1565,7 +1548,7 @@ else
 	oUF_ToF:SetScale(cfg.FrameScale * cfg.FocusFrameScale)
 end
 
-if cfg.HideParty then oUF_Hank.HideParty() end
+if cfg.HideParty then oUF:DisableBlizzard("party") end
 if cfg.Castbar then oUF_Hank.AdjustMirrorBars() end
 
 if cfg.RangeFade and not IsAddOnLoaded("oUF_SpellRange") then
