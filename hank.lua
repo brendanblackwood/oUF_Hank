@@ -96,10 +96,22 @@ oUF_Hank.menu = function(self)
 
 	if(unit == "party" or unit == "partypet") then
 		ToggleDropDownMenu(nil, nil, _G["PartyMemberFrame"..self.id.."DropDown"], "cursor", 0, 0)
-	elseif(cunit == "Target") then
-		ToggleDropDownMenu(nil, nil, _G["TargetFrame"].DropDown, "cursor", 0, 0)
-	elseif(_G[cunit.."FrameDropDown"]) then
-		ToggleDropDownMenu(nil, nil, _G[cunit.."FrameDropDown"], "cursor", 0, 0)
+	elseif(cunit == "Player") then
+		local which = nil;
+		local contextData = {
+			fromPlayerFrame = true;
+		};
+
+		if unit == "vehicle" then
+			which = "VEHICLE";
+			contextData.unit = "vehicle";
+		else
+			which = "SELF";
+			contextData.unit = "player";
+		end
+		UnitPopup_OpenMenu(which, contextData);
+	elseif(_G[cunit.."Frame_OpenMenu"]) then
+		_G[cunit.."Frame_OpenMenu"]()
 	end
 end
 
@@ -111,8 +123,11 @@ oUF_Hank.AdjustMirrorBars = function()
 	-- 	MirrorTimerColors[k].b = cfg.colors.castbar.bar[3]
 	-- end
 
-	for i = 1, MIRRORTIMER_NUMTIMERS do
-		local mirror = _G["MirrorTimer" .. i]
+	-- for i = 1, MIRRORTIMER_NUMTIMERS do
+	for i = 1, 3 do
+		local timer, initial, maxvalue, scale, paused, label = GetMirrorTimerInfo(i)
+		-- local mirror = _G["MirrorTimer" .. i]
+		local mirror = timer
 		local statusbar = mirror.StatusBar
 		local backdrop = select(1, mirror:GetRegions())
 		local border = mirror.Border
@@ -424,9 +439,9 @@ end
 
 -- Debuff anchoring
 oUF_Hank.PostBuffUpdate = function(buffs, unit)
-	if #buffs.sorted > 0 then
+	if buffs.visibleButtons > 0 then
 		-- Anchor debuff frame to bottomost buff icon, i.e the last buff row
-		buffs:GetParent().Debuffs:SetPoint("TOP", buffs[#buffs.sorted], "BOTTOM", 0, -cfg.AuraSpacing -2)
+		buffs:GetParent().Debuffs:SetPoint("TOP", buffs[buffs.visibleButtons], "BOTTOM", 0, -cfg.AuraSpacing -2)
 	else
 		-- No buffs
 		if buffs:GetParent().CPoints then
@@ -979,10 +994,12 @@ oUF_Hank.sharedStyle = function(self, unit, isSingle)
 
 			unitFrame.ClassPower.animLastState = unitFrame.ClassPower.animLastState or 0
 			if current > 0 then
+				-- pretend this is still an int
+				current_floor = math.floor(current)
 				if unitFrame.ClassPower.animLastState < current then
 					-- Play animation only when we gain power
-					unitFrame.ClassPower[current]:SetAlpha(0)
-					unitFrame.ClassPower.animations[current]:Play();
+					unitFrame.ClassPower[current_floor]:SetAlpha(0)
+					unitFrame.ClassPower.animations[current_floor]:Play();
 				end
 			else
 				for i = 1, max do
@@ -1549,7 +1566,7 @@ else
 end
 
 if cfg.HideParty then oUF:DisableBlizzard("party") end
-if cfg.Castbar then oUF_Hank.AdjustMirrorBars() end
+-- if cfg.Castbar then oUF_Hank.AdjustMirrorBars() end
 
 if cfg.RangeFade and not IsAddOnLoaded("oUF_SpellRange") then
 	DEFAULT_CHAT_FRAME:AddMessage("oUF_Hank: Please download and install oUF_SpellRange before enabling range checks!", cfg.colors.text[1], cfg.colors.text[2], cfg.colors.text[3])
